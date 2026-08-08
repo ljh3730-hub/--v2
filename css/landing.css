@@ -946,6 +946,11 @@ body.mobile-mode {
      스크롤 컨테이너로 봐야 할지 헷갈려서 안 붙어있고 그냥 같이 스크롤되어 버림 */
   overflow-y: auto;
   overflow-x: hidden;
+<<<<<<< Updated upstream
+=======
+  width: 100%; /* [크로스 브라우징] 기기 폭이 402px보다 작거나 커도 body 자체가
+     가로로 넘치지 않도록 명시적으로 고정 */
+>>>>>>> Stashed changes
   height: 100%;
   background: #e5e5e5;
   /* 피그마 작업 프레임(W=402px) 기준 본문 폰트: 13px = 3.2338cqw. 화면 폭이
@@ -1143,7 +1148,18 @@ body.mobile-mode .m-vertical-line::before {
   /* 색상 정지점(0%/40%/75%)은 데스크톱(#page)의 검증된 그라데이션 값과
      완전히 동일 — "웹에서 적용된 그라디언트 애니메이션 유지" 요청 반영 */
   background-image: radial-gradient(circle var(--spot-radius, 1400px) at var(--shimmer-x, -9999px) 50%,
+<<<<<<< Updated upstream
     rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.35) 40%, rgba(255, 255, 255, 0) 75%);
+=======
+    /* [버그 수정] ABOUT처럼 콘텐츠 세로 길이가 짧은 뷰에서, 반지름(--spot-radius)이
+       페이지 높이보다 훨씬 커서 스윕 중 화면 전체가 거의 항상 최고 밝기(0.95)
+       구간에 들어가 글자/세로선이 하얗게 먹혀버리는 "화이트아웃" 현상이 있었음.
+       reach(반지름)는 그대로 두고 밝기 정점만 0.95→0.45로 낮춰(중간 정지점도
+       비례해서 0.35→0.18) 짧은 뷰에서도 항상 글자/세로선 대비(contrast)가
+       유지되도록 함 — 27행 리스트처럼 긴 뷰의 "빛이 지나가며 번지는" 느낌은
+       동일하게 유지됨(reach 불변, 밝기만 완화) */
+    rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.18) 40%, rgba(255, 255, 255, 0) 75%);
+>>>>>>> Stashed changes
 }
 .m-header-left {
   /* 선 위치(x=14) + 7px 여백 = x=21, 402px 기준 5.2239cqw로 하나로 합침 —
@@ -1202,6 +1218,15 @@ body.mobile-mode .m-vertical-line::before {
      기기마다 달라서 고정 px로는 정확히 맞지 않음) — JS 실행 전 최초 페인트
      등 값이 없을 때만 calc(100vh - 180px)로 폴백 */
   max-height: var(--m-list-max-h, calc(100vh - 180px));
+<<<<<<< Updated upstream
+=======
+  max-height: var(--m-list-max-h, calc(100dvh - 180px)); /* [크로스 브라우징] 동적 뷰포트
+     높이 단위 지원 브라우저(대부분의 최신 모바일 Safari/Chrome)에서는 주소창이
+     늘어나고 줄어들 때도 레이아웃이 찌그러지지 않도록 100dvh로 덮어씀 —
+     미지원 브라우저는 이 줄 자체가 무효화되어 위 100vh로 자연 폴백됨.
+     실제로는 JS(updateMobileListMaxHeight)가 --m-list-max-h를 항상 정밀하게
+     다시 계산해서 넣어주므로 이 calc()들은 JS 실행 전 최초 페인트 순간에만 씀 */
+>>>>>>> Stashed changes
   overflow-y: auto;
   /* [버그 수정] overscroll-behavior:contain은 이 리스트를 끝까지 스크롤한
      뒤 계속 스크롤 제스처(휠/터치)를 이어가도, 그 스크롤이 바깥 body로
@@ -1313,7 +1338,19 @@ body.mobile-mode .m-vertical-line::before {
                           값(단위까지 통일: rem이 아니라 cqw)으로 맞춰, 헤더
                           아래 본문 시작 Y축이 모든 페이지에서 완전히 일치하게 함 */
   margin-left: 3.4826cqw; /* 14px / 402px */
+<<<<<<< Updated upstream
   height: 161.9403cqw; /* 651px / 402px — 402px 이상은 651px로 캡, 그 미만은 비례 축소 */
+=======
+  /* [버그 수정] 기존엔 피그마 스펙 그대로 651px(161.9403cqw)로 높이를 고정했는데,
+     이 값은 402px 기준 특정 줄바꿈 결과를 전제로 계산된 값이라 실제 문단이 그보다
+     짧은 화면(측정 결과 iPhone SE~15 Pro Max 전 구간에서 약 220px 더 짧음)에서는
+     세로선(border-left)이 마지막 문장보다 한참 아래까지 빈 여백 위로 계속 그려져
+     "글자와 무관하게 뜬금없이 끊기는" 것처럼 보였음. height를 콘텐츠 높이를
+     그대로 따라가는 auto로 바꿔서, 선이 항상 정확히 마지막 문장 끝에서 멈추도록
+     수정 — 이후 화면 폭/폰트 스케일이 달라져 줄바꿈 수가 바뀌어도 항상 실제
+     콘텐츠와 정확히 일치함 */
+  height: auto;
+>>>>>>> Stashed changes
   border-left: 1px solid #000000;
   padding-top: 0;
   padding-left: 1.7413cqw; /* 7px / 402px */
@@ -1382,6 +1419,15 @@ body.mobile-mode .m-vertical-line::before {
   padding: 0 0 0.25rem 1.7413cqw; /* 7px / 402px — top:0으로 선/텍스트 상단 정렬 */
   font-family: var(--font-ko);
   color: #000000;
+<<<<<<< Updated upstream
+=======
+  /* [버그 수정] 지도교수/참여자 명단 텍스트가 402px 모바일 프레임 우측 경계
+     밖으로 삐져나가거나 잘리는 일이 없도록 방어적으로 폭을 재조정 —
+     box-sizing:border-box로 padding까지 포함해 폭을 계산하고, max-width:100%로
+     부모(#mMeta) 폭을 절대 넘지 않게 고정함 */
+  box-sizing: border-box;
+  max-width: 100%;
+>>>>>>> Stashed changes
 }
 /* 학과 정보("홍익대학교 시각디자인과..."/"Hongik University...")만 크레딧
    블록 공통(11px/19px)과 다른 자기만의 스펙(11px/17px)을 씀 */
@@ -1389,6 +1435,11 @@ body.mobile-mode .m-vertical-line::before {
   font-size: 2.7363cqw; /* 11px / 402px */
   font-weight: 500;
   line-height: 4.2289cqw; /* 17px / 402px */
+<<<<<<< Updated upstream
+=======
+  word-break: keep-all;
+  max-width: 100%;
+>>>>>>> Stashed changes
 }
 /* 지도교수/참여자 행: 라벨(고정 폭) + 값(나머지 폭, 줄바꿈) 2칼럼 —
    데스크톱의 .meta-label/.meta-people 나란히 배치를 모바일에서도 그대로
@@ -1400,10 +1451,21 @@ body.mobile-mode .m-vertical-line::before {
    x좌표가 '석재원'과 정확히 일치하게 함. 줄 간격도 11px/19px 밀도에
    맞춰 촘촘하게 좁힘. 라벨(지도교수/참여자)은 weight 700, 값(석재원/
    이세민 등 이름들)은 weight 500 — 피그마 스펙대로 명시적으로 구분함 */
+<<<<<<< Updated upstream
 .m-meta-row { display: flex; align-items: baseline; margin-top: 8px; font-size: 2.7363cqw; line-height: 4.7264cqw; } /* 11px/19px */
 .m-meta-row:first-of-type { margin-top: 8px; }
 .m-meta-label-inline { width: 14.9254cqw; flex-shrink: 0; font-weight: 700; color: #000000; } /* 60px / 402px */
 .m-meta-value { flex: 1; font-weight: 500; color: #000000; }
+=======
+.m-meta-row { display: flex; align-items: baseline; margin-top: 8px; font-size: 2.7363cqw; line-height: 4.7264cqw; max-width: 100%; } /* 11px/19px */
+.m-meta-row:first-of-type { margin-top: 8px; }
+.m-meta-label-inline { width: 14.9254cqw; flex-shrink: 0; font-weight: 700; color: #000000; } /* 60px / 402px */
+/* [버그 수정] min-width:0을 줘야 flex:1 아이템이 형제(라벨)보다 내용이 길어도
+   부모 폭 밖으로 밀고 나가지 않고(flex item 기본 min-width:auto가 grid와 동일한
+   방식으로 overflow를 유발함) 자기 트랙 안에서 줄바꿈함. word-break:keep-all로
+   어절 단위로만 끊어 한글이 음절 중간에서 잘리지 않게 함 */
+.m-meta-value { flex: 1; min-width: 0; font-weight: 500; color: #000000; word-break: keep-all; }
+>>>>>>> Stashed changes
 /* 참여자 명단: 항상 한 줄에 정확히 4명씩(총 27명, 마지막 줄만 3명) —
    텍스트 흐름에 맡기면 화면 폭에 따라 3개/줄로 어정쩡하게 꺾이므로,
    grid-template-columns:repeat(4, auto)로 강제 고정함. 11px 폰트라
@@ -1420,6 +1482,11 @@ body.mobile-mode .m-vertical-line::before {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 2px 10px;
   width: 100%;
+<<<<<<< Updated upstream
+=======
+  max-width: 100%;
+  box-sizing: border-box;
+>>>>>>> Stashed changes
 }
 /* 'XU NING'처럼 이름에 공백이 포함된 경우 셀 안에서 두 줄로 쪼개지지
    않도록 항상 한 줄로 고정 */
@@ -1491,6 +1558,12 @@ body.mobile-mode #connecting-line-svg {
   inset: 0;
   width: 100vw;
   height: 100vh;
+<<<<<<< Updated upstream
+=======
+  height: 100dvh; /* [크로스 브라우징] 동적 뷰포트 높이 — 주소창 접힘/펼침 시에도
+     연결선 SVG가 항상 실제 화면 전체를 정확히 덮도록 함(미지원 브라우저는
+     이 줄이 무효화되어 위 100vh로 자연 폴백) */
+>>>>>>> Stashed changes
   pointer-events: none;
   overflow: visible;
   z-index: 200;
@@ -1524,7 +1597,15 @@ body.mobile-mode #mTabs {
   max-width: 402px; /* #mobilePage 카드 폭(피그마 402px 스펙)과 정확히 맞춤 —
                         창이 그보다 넓어도 탭이 카드 폭 안에서만 떠 있게 함 */
   transform: translateX(-50%);
+<<<<<<< Updated upstream
   padding: 48px 0 24px;
+=======
+  padding: 48px 0 calc(24px + env(safe-area-inset-bottom)); /* [크로스 브라우징]
+     iPhone 홈 바(노치 기종)나 안드로이드 제스처 내비게이션 바 영역과 탭
+     버튼이 겹치지 않도록, 기존 24px 여백에 안전 영역만큼을 더 얹음 —
+     safe-area-inset-bottom을 지원하지 않는 기기는 0으로 계산되어 기존과
+     완전히 동일하게 24px만 적용됨(회귀 없음) */
+>>>>>>> Stashed changes
   background: linear-gradient(to top, #ffffff 65%, rgba(255, 255, 255, 0) 100%);
   transition: background 0.3s ease;
   z-index: 100;
@@ -1820,7 +1901,18 @@ body.mobile-mode :is(
   /* 색상 정지점(0%/40%/75%)은 데스크톱(#page)의 검증된 그라데이션 값과
      완전히 동일 — "웹에서 적용된 그라디언트 애니메이션 유지" 요청 반영 */
   background-image: radial-gradient(circle var(--spot-radius, 1400px) at var(--shimmer-x, -9999px) 50%,
+<<<<<<< Updated upstream
     rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.35) 40%, rgba(255, 255, 255, 0) 75%);
+=======
+    /* [버그 수정] ABOUT처럼 콘텐츠 세로 길이가 짧은 뷰에서, 반지름(--spot-radius)이
+       페이지 높이보다 훨씬 커서 스윕 중 화면 전체가 거의 항상 최고 밝기(0.95)
+       구간에 들어가 글자/세로선이 하얗게 먹혀버리는 "화이트아웃" 현상이 있었음.
+       reach(반지름)는 그대로 두고 밝기 정점만 0.95→0.45로 낮춰(중간 정지점도
+       비례해서 0.35→0.18) 짧은 뷰에서도 항상 글자/세로선 대비(contrast)가
+       유지되도록 함 — 27행 리스트처럼 긴 뷰의 "빛이 지나가며 번지는" 느낌은
+       동일하게 유지됨(reach 불변, 밝기만 완화) */
+    rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.18) 40%, rgba(255, 255, 255, 0) 75%);
+>>>>>>> Stashed changes
 }
 /* [그라데이션 연동] .common-footer(하단 카피라이트)는 자기 자신의 border-left
    (x=186 세로선)를 갖는데, absolute ::before(inset:0)는 기본적으로 padding
