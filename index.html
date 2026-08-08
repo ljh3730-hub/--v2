@@ -4,9 +4,12 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>이것은 전시가 아니다</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32-v3.png"/>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16-v3.png"/>
+<link rel="apple-touch-icon" href="assets/apple-touch-icon-v3.png"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"/>
-<link rel="stylesheet" href="css/common.css"/>
-<link rel="stylesheet" href="css/landing.css"/>
+<link rel="stylesheet" href="css/common.css?v=20260728a"/>
+<link rel="stylesheet" href="css/landing.css?v=202608099b"/>
 </head>
 <body>
 <div id="page">
@@ -18,9 +21,6 @@
   <div id="colB"></div>
   <svg id="linesSvg" xmlns="http://www.w3.org/2000/svg"></svg>
 
-  <!-- 썸네일 표시 영역 -->
-  <div id="thumbBox"><img id="thumbImg" src="" alt=""/></div>
-
   <!-- 2열: 정보 패널 -->
   <div id="panelInfo">
     <div class="hr" style="top:17px;  left:-1px; width:379px;"></div>
@@ -28,36 +28,45 @@
     <div class="hr" style="top:159px; left:0;    width:378px;"></div>
     <div class="hr" style="top:361px; left:0;    width:378px;"></div>
     <div class="hr" style="top:592px; left:0;    width:378px;"></div>
-    <div class="hr" style="top:906px; left:0;    width:378px;"></div>
+    <div id="infoLastHR" class="hr" style="top:906px; left:0;    width:378px;"></div>
     <div class="info-title">이것은 전시가 아니다<br>This is not an Exhibition</div>
     <div class="info-date">
       거짓말 워크숍 결과물 전시<br>
-      2023년 4월 20일 (월) - 4월 24일 (금)<br>
+      <span style="white-space: nowrap;">2026년 4월 20일 (월) - 4월 24일 (금)</span><br>
       홍익대학교 홍문관 7층 R777<br>
       10:30 - 16:30
     </div>
     <div class="info-desc-ko">
-      우리는 무엇을 보고, 무엇을 그렇게 믿게 되었는가. 거짓인지<br>
-      진짜인지 분간할 수 없는 상황들 속에서, 우리가 알고 있다고<br>
-      믿어온 사실과 거짓 사이에서 진짜는 어디에 있는가. 우리는<br>
-      무의식적으로 받아들여온 '진실'을 의심한다. 익숙하게 믿어온<br>
-      세계를 다시 들춰내고, 그 안에 숨겨진 균열을 드러낸다.<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;이곳에는 스물일곱 명의 디자이너가 만들어낸 스물일곱<br>
-      개의 거짓이 있다. 서로 어울리지 않는 말과 이미지들은 낯선 방식으로 결합되어, 익숙한 의미를 흔들고 새로운 해석의 틈을<br>
-      만들어낸다. 이곳에서의 의심과 혼란이, 당신이 믿어온 세계를<br>
-      다시 바라보게 하기를.
+      우리는 무엇을 보고, 무엇을 그렇게 믿게 되었는가. 거짓인지 진짜인지 분간할 수 없는 상황들 속에서, 우리가 알고 있다고 믿어온 사실과 거짓 사이에서 진짜는 어디에 있는가. 우리는 무의식적으로 받아들여온 '진실'을 의심한다. 익숙하게 믿어온 세계를 다시 들춰내고, 그 안에 숨겨진 균열을 드러낸다.<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;이곳에는 스물일곱 명의 디자이너가 만들어낸 스물일곱 개의 거짓이 있다. 서로 어울리지 않는 말과 이미지들은 낯선 방식으로 결합되어, 익숙한 의미를 흔들고 새로운 해석의 틈을 만들어낸다. 이곳에서의 의심과 혼란이, 당신이 믿어온 세계를 다시 바라보게 하기를.
     </div>
     <div class="info-desc-en">
       What do we see, and what leads us to believe it as such? In situations where truth and falsehood are indistinguishable, where does the real lie between what we think we know? We question the "truths" we have unconsciously accepted, revisiting the familiar world and revealing the cracks hidden within it.<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In this place, twenty-seven designers present twenty-seven lies. Words and images that do not belong together are combined in unfamiliar ways, unsettling familiar meanings and opening gaps for new interpretations. We hope that the doubt and confusion experienced here will lead you to reconsider the world you once believed in.
     </div>
-    <div class="info-more">더보기</div>
+    <div class="info-poster-header">
+      <span class="info-poster-label">27개의 포스터</span>
+      <span class="info-poster-more">자세히 보기</span>
+    </div>
+    <div class="poster-grid" id="posterGrid"></div>
     <div class="info-copyright">
       2026 © Hongik University<br>
       Dept. of Visual Communication Design.<br>
       All Rights Reserved
     </div>
   </div>
+
+  <!-- 자세히 보기: 전체 포스터 그리드 (가운데, 평소엔 숨김).
+       페이지 전체가 한 흐름으로 같이 스크롤됨 (그리드만 따로 스크롤되지 않음) -->
+  <div id="detailHR" class="hr"></div>
+  <div id="posterDetailGrid"></div>
+  <div id="detailFooter"></div>
+
+  <!-- 개별 디자이너 상세 페이지 (이름/A단어/B단어 클릭 시, 평소엔 숨김) -->
+  <div id="personPanel"></div>
+  <div id="personGalleryHR" class="hr"></div>
+  <div id="personGallery"></div>
+  <div id="personFooter"></div>
 
   <!-- 3열: 메타 패널 -->
   <div id="panelMeta">
@@ -79,7 +88,87 @@
     </div>
   </div>
 
+  <!-- 텍스트 그라데이션(회색->검정) 오버레이: screen 블렌드라 흰 배경은 안 물들고
+       글자에만 적용됨. #thumbBox보다 앞에 둬서 썸네일은 이 영향을 안 받음 -->
+  <div id="pageGradientOverlay"></div>
+
+  <!-- 썸네일 표시 영역 -->
+  <div id="thumbBox"><img id="thumbImg" src="" alt=""/></div>
+
 </div>
-<script src="js/landing.js"></script>
+
+<!-- 포스터 확대뷰: #page 밖(스케일 영향 안 받음)에 둬서 스크롤/화면크기와 무관하게
+     항상 뷰포트 정중앙에 고정. 배경(주변부) 클릭하면 닫힘 -->
+<div id="posterLightbox">
+  <img id="posterLightboxImg" alt=""/>
+</div>
+
+<!-- 모바일 전용 뷰: #page(데스크톱, 화면 높이 기준 scale)와 완전히 별도의 구조.
+     좁은 화면에서는 JS(applyResponsiveMode)가 body에 mobile-mode 클래스를 붙이고
+     이 쪽을 세로로 자연스럽게 흐르는 레이아웃으로 보여줌. 피그마 [모바일] 랜딩 시안
+     기준: 상단은 제목|날짜 2단 그리드, 아래는 이름|작품제목 리스트(같은 2단 그리드로
+     세로 구분선이 이어짐), 하단은 고정된 ABOUT/POSTERS 탭. 내용은 JS(initMobile)가
+     DATA와 데스크톱 정적 텍스트를 그대로 가져다 채움 -->
+<div id="mobilePage">
+  <div id="mScroll">
+    <div id="mHeader">
+      <!-- [그라데이션 연동] 기존엔 #mHeader::before 가상요소로 그리던 좌측
+           세로선(x=14)을 실제 DOM div로 분리 — 가상요소는 JS가
+           getBoundingClientRect()로 좌표를 잴 수 없어서(querySelectorAll
+           대상이 될 수 없음) 배경 그라데이션 애니메이션이 침투하지 못했음.
+           실제 요소로 바꿔서 아래 리스트의 .m-list-line과 함께 랜딩 배경
+           그라데이션을 공유하도록 함(둘 다 .m-vertical-line 클래스) -->
+      <div class="m-vertical-line m-header-line"></div>
+      <div class="m-header-left">
+        <div class="m-title-ko">이것은 전시가 아니다</div>
+        <div class="m-title-en">This is not an Exhibition</div>
+      </div>
+      <!-- [그라데이션 연동] #mHeader::after(x=186 우측 세로선)도 실제 DOM div로
+           분리 — 좌측 선과 동일한 이유(가상요소는 좌표를 잴 수 없어 그라데이션이
+           침투 못함) -->
+      <div class="m-vertical-line m-header-line-right"></div>
+      <div class="m-header-right" id="mHeaderDate"></div>
+    </div>
+    <!-- 기본(랜딩) 화면: 이름/작품 제목 연결선 리스트 — 탭과 무관한 기본 상태라
+         ABOUT/POSTERS 어느 쪽도 활성/밑줄 표시되지 않음 -->
+    <div id="mListView" class="m-view landing-page">
+      <!-- [그라데이션 연동] .m-view::before로 그리던 리스트 전체 높이의 좌측
+           세로선(x=14)을 실제 DOM div로 분리(위 헤더 세로선과 동일 이유) -->
+      <div class="m-vertical-line m-list-line"></div>
+      <div id="mList"></div>
+    </div>
+    <!-- POSTERS 탭: 데스크톱 버전과 동일한 27개 포스터 그리드 -->
+    <div id="mPostersView" class="m-view-plain landing-page" hidden>
+      <div id="mPosterGrid" class="m-poster-grid"></div>
+    </div>
+    <!-- ABOUT 탭: 데스크톱 버전과 동일한 전시 정보(소개글+메타).
+         #mAbout(.about-statement-wrapper, x=14 선)은 기조글 끝에서 선이
+         멈추고, #mMeta(.about-credits-wrapper, x=186 선)는 학과/지도교수/
+         참여자만 담아 그 끝에서 선이 멈추며, #mAboutFooter(카피라이트)는
+         선 없이 별도로 아래에 배치됨 -->
+    <div id="mAboutView" class="m-view about-page" hidden>
+      <div id="mAbout"></div>
+      <div id="mMeta"></div>
+      <div id="mAboutFooter"></div>
+    </div>
+    <div id="mPersonView" class="detail-content"></div>
+  </div>
+  <nav id="mTabs">
+    <button type="button" class="m-tab" data-tab="about">ABOUT</button>
+    <button type="button" class="m-tab" data-tab="posters">POSTERS</button>
+    <button type="button" id="mCloseDetail" class="m-tab-close" aria-label="닫기"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L13 13M1 13L13 1" stroke="black" stroke-width="2" stroke-linecap="round"/></svg></button>
+  </nav>
+  <div id="mFooter">
+    <div class="m-footer-right common-footer">
+      2026 &copy; Hongik University<br>
+      Dept. of Visual Communication Design.<br>
+      All Rights Reserved
+    </div>
+  </div>
+</div>
+
+<svg id="connecting-line-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+
+<script src="js/landing.js?v=202608099a"></script>
 </body>
 </html>
