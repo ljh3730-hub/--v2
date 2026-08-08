@@ -1183,14 +1183,30 @@ let mSavedScrollTop = 0;       /* 상세 페이지 열기 직전의 랜딩 스�
 let mLandingHeaderLeftHTML  = ''; /* #mHeader 1단(전시 제목) 원래 내용 캐시 */
 let mLandingHeaderRightHTML = ''; /* #mHeader 2단(날짜) 원래 내용 캐시 */
 
+/* [버그 수정] PC 데스크톱에서 브라우저 창을 좁게 줄이거나(예: 화면 분할,
+   작은 노트북 해상도) 세로로 긴 비율로 리사이즈하면, 아래 shortSide/longSide
+   판정만으로는 "태블릿을 세로로 든 상태"와 구분이 안 돼 터치 없는 일반
+   PC인데도 모바일 403px 카드 레이아웃(body.mobile-mode #mobilePage{max-width:
+   402px})이 강제 적용되어 화면 양옆에 여백만 남고 답답하게 압축되어 보이는
+   문제가 있었음. 마우스/트랙패드만 있는 PC는 창 크기·비율과 무관하게 항상
+   웹 버전을 써야 하므로, "터치 입력이 가능한 기기인지"를 최우선 게이트로
+   추가함 — 태블릿(터치 있음)의 세로/가로 자동 전환 기능은 그대로 유지됨 */
+function isTouchCapableDevice() {
+  return (navigator.maxTouchPoints > 0) ||
+         ('ontouchstart' in window) ||
+         (navigator.msMaxTouchPoints > 0);
+}
+
 /* 태블릿(iPad 등) 접속 시 화면 방향에 따라 자동 전환: 세로(portrait)=모바일,
    가로(landscape)=웹. 순수 폭(width)만 보면 "폰을 가로로 눕힌 경우"(예: 844×390)도
    폭이 커서 태블릿 구간으로 잘못 잡혀 데스크톱 레이아웃이 나와 버림 — 그래서
    폭이 아니라 "짧은 변"(shortSide = min(width, height))으로 폰인지 먼저 가려냄:
+   0) 터치가 전혀 안 되는 기기(PC/노트북) → 창 크기·비율과 무관하게 항상 웹
    1) shortSide < 600px → 폰(가로로 눕혀도 짧은 변은 여전히 작음) → 방향 무관 항상 모바일
    2) 긴 변이 1366px 이하(태블릿 구간) → width < height(세로)면 모바일, 아니면(가로) 웹
    3) 그 이상(일반 데스크톱/노트북) → 방향 무관 항상 웹 */
 function isMobileViewport() {
+  if (!isTouchCapableDevice()) return false;
   const w = window.innerWidth;
   const h = window.innerHeight;
   const shortSide = Math.min(w, h);
