@@ -1246,8 +1246,6 @@ function boundedPermutation(n, maxOffset) {
   return result;
 }
 
-<<<<<<< Updated upstream
-=======
 /* ── 가시 영역 한정 + 파격적 대각선 매칭(Chunked Far-Biased Permutation) ──
    처음엔 boundedPermutation처럼 "자기 자신 위치 기준 ±maxOffset" 슬라이딩
    윈도우로 시도했는데, 이 방식은 함정이 있음: 화면 맨 위(0번째 행)는 창이
@@ -1275,7 +1273,6 @@ function chunkedFarBiasedPermutation(n, chunkSize) {
   return result;
 }
 
->>>>>>> Stashed changes
 /* ── 파격적 대각선 크로스 매칭(Far-Biased Permutation) ──
    기존 boundedPermutation(maxOffset=1)은 "짝이 항상 바로 옆 줄"이라 화면이
    잘리는 걸 막았지만, 그 대가로 연결선이 전부 거의 수평인 짧은 평행선이 되어
@@ -1305,64 +1302,96 @@ function farBiasedPermutation(n) {
   return result;
 }
 
-<<<<<<< Updated upstream
-function buildMobileList() {
-  const nameOrder = shuffle(DATA.map((_, i) => i)); /* 각 행에 어떤 디자이너의 이름이 보일지는 자유롭게 셔플 */
-
-  /* 파격적 대각선 크로스 배치: 이전엔 |Index(A)-Index(B)|<=1로 묶어서 항상
-     바로 옆줄에 짝을 뒀지만(평행선 위주), 이제는 반대로 화면 세로 비율이
-     충분함을 활용해 짝을 최대한 멀리 떨어뜨림 — farBiasedPermutation이 거리에
-     크게 가중치를 준 랜덤으로 이름-행(r)과 제목-행(s)을 매칭해서, 클릭 시
-     그어지는 연결선이 위쪽 A가 아래쪽 B로, 아래쪽 A가 위쪽 B로 대각선으로
-     길게 가로지르는 경우가 압도적으로 많아짐 */
-  const namePositions = farBiasedPermutation(DATA.length); /* namePositions[s] = s행의 제목이 속한 이름-행 인덱스(r) */
-=======
 let mLastVisibleRowCount = null; /* 마지막으로 buildMobileList를 만들 때 쓴 가시 행 수(N) —
    리사이즈/회전 때 이 값이 바뀌면 청크 경계 자체가 달라지므로 리스트를 다시 섞음 */
 
+/* [버그 수정] 실제 화면에 보이는(In-Viewport) 행만 Strict 필터링: 기존
+   estimateVisibleRows()는 헤더/탭바 높이를 실측하되 "행 높이"만은 26px
+   고정 근사치를 썼음(실제 렌더링 값과 미세하게 어긋나면 화면 맨 아래 경계의
+   행 하나가 오차로 잘못 포함/제외될 수 있음). 근사식 대신 리스트 컨테이너
+   (#mList, 실제 스크롤 가능 영역)의 getBoundingClientRect()와 각 .m-row의
+   getBoundingClientRect()를 직접 비교해서 "상단 헤더 아래, 하단 탭바 위
+   눈에 보이는 영역 안에 완전히 들어오는 행"만 골라냄 — 근사가 아니라 실측이라
+   기기/폰트 스케일이 달라져도 항상 정확함. rows가 위→아래 DOM 순서로
+   쌓여있으므로(#mList는 flex-column, order 속성 없음) 한 번 범위를 벗어나면
+   그 뒤 행은 확인할 필요 없이 바로 멈춤 */
+function computeVisibleMobileRowIndices(rows) {
+  const list = document.getElementById('mList');
+  if (!list || rows.length === 0) return [];
+  const listContainerRect = list.getBoundingClientRect();
+  const visibleIndices = [];
+  for (let i = 0; i < rows.length; i++) {
+    const rect = rows[i].getBoundingClientRect();
+    if (rect.top >= listContainerRect.top - 0.5 && rect.bottom <= listContainerRect.bottom + 0.5) {
+      visibleIndices.push(i);
+    } else if (visibleIndices.length > 0) {
+      break;
+    }
+  }
+  return visibleIndices;
+}
+
 function buildMobileList() {
-  const N = Math.max(1, estimateVisibleRows());
+  updateMobileListMaxHeight(); /* 측정 직전 #mList의 실제 가시 높이(--m-list-max-h)를 최신 상태로 갱신 */
+
+  const list = document.getElementById('mList');
+  list.innerHTML = '';
+
+  /* 1단계: 실제 행 DOM을 임시 순서(0..26, 셔플 전)로 먼저 그려 넣음 — 줄
+     높이(line-height)는 내용과 무관하게 고정이라, 최종 셔플 결과가 정해지기
+     전에도 이 임시 배치로 "몇 번째 행까지 화면에 보이는지" 정확히 측정할 수
+     있음(측정 후 3단계에서 같은 DOM에 최종 이름/제목만 덮어씀) */
+  const tempRows = [];
+  for (let r = 0; r < DATA.length; r++) {
+    const row = document.createElement('div');
+    row.className = 'm-row';
+    row.innerHTML =
+      `<span class="m-row-name">${DATA[r].name}</span>` +
+      `<span class="m-row-title">${DATA[r].koTitle || ''}</span>`;
+    list.appendChild(row);
+    tempRows.push(row);
+  }
+
+  /* 2단계: 실측 — #mList 경계 안에 완전히 들어오는 행만 "가시 행"으로 인정.
+     혹시 측정이 실패해 0개가 나오면(레이아웃이 아직 완전히 자리잡기 전 등)
+     기존 근사식(estimateVisibleRows)으로 안전하게 폴백 */
+  const visibleIdx = computeVisibleMobileRowIndices(tempRows);
+  const N = Math.max(1, visibleIdx.length || estimateVisibleRows());
   mLastVisibleRowCount = N;
+
   const nameOrder = shuffle(DATA.map((_, i) => i)); /* 각 행에 어떤 디자이너의 이름이 보일지는 자유롭게 셔플 */
 
   /* [버그 수정] 화면 가시 영역 내 한정 매칭: 기존 farBiasedPermutation(범위 제한
      없음, 27행 전체 아무 데나 매칭)은 화면이 짧은 기기에서 스크롤 없이 보이는
      행 수(N)보다 훨씬 먼 행끼리 짝을 지어, 연결선이 화면 위/아래로 뻗어나가
      이탈하는 문제가 있었음. chunkedFarBiasedPermutation(N)으로 교체해 27명을
-     "화면에 스크롤 없이 보이는 크기(N)"의 블록으로 잘라 블록 내부에서만
+     "화면에 스크롤 없이 보이는 크기(N, 실측값)"의 블록으로 잘라 블록 내부에서만
      매칭되게 함 — 어느 화면(스크롤 위치)을 보고 있든, 그 화면에 실제로 나열된
      행끼리만 짝이 되는 게 항상 보장되면서, 블록 안에서는 여전히 위/아래로
      과감하게 교차하는 대각선 크로스 라인의 느낌이 그대로 살아있음 */
   const namePositions = chunkedFarBiasedPermutation(DATA.length, N); /* namePositions[s] = s행의 제목이 속한 이름-행 인덱스(r) */
->>>>>>> Stashed changes
   const titleOrder = namePositions.map(r => nameOrder[r]);
 
   mNameOrder  = nameOrder;
   mTitleOrder = titleOrder;
 
-<<<<<<< Updated upstream
-=======
-  /* 리스트를 다시 그리면 기존 행 DOM이 통째로 교체되므로, 혹시 그 순간에 걸려
-     있던 연결선/연결 상태를 먼저 깨끗이 정리함(참조가 끊긴 옛 DOM을 가리키는
-     선이 화면에 남아있지 않도록) */
+  /* 리스트 내용을 다시 배정하면 혹시 그 순간에 걸려 있던 연결선/연결 상태가
+     끊긴 옛 참조를 가리킬 수 있으므로 먼저 깨끗이 정리함 */
   const oldSvg = document.getElementById('connecting-line-svg');
   if (oldSvg) oldSvg.innerHTML = '';
   mLastLineNameEl = null;
   mLastLineTitleEl = null;
   mConnecting = false;
 
->>>>>>> Stashed changes
-  const list = document.getElementById('mList');
-  list.innerHTML = '';
+  /* 3단계: 1단계에서 만든 같은 DOM 행(tempRows)에 최종 이름/제목 배정을
+     덮어씀 — 요소를 새로 만들지 않고 재사용하므로 방금 측정한 레이아웃이
+     그대로 유효함 */
   for (let r = 0; r < DATA.length; r++) {
     const namePi  = mNameOrder[r];
     const titlePi = mTitleOrder[r];
-    const row = document.createElement('div');
-    row.className = 'm-row';
-    row.innerHTML =
+    tempRows[r].innerHTML =
       `<span class="m-row-name" data-pi="${namePi}">${DATA[namePi].name}</span>` +
       `<span class="m-row-title" data-pi="${titlePi}">${DATA[titlePi].koTitle || ''}</span>`;
-    list.appendChild(row);
   }
 
   /* .m-row-name/.m-row-title는 grid item 기본값(justify-self:stretch)으로
@@ -1412,8 +1441,6 @@ function getTextRect(el) {
   return range.getBoundingClientRect();
 }
 
-<<<<<<< Updated upstream
-=======
 /* [크로스 브라우징] 화면 회전/주소창 접힘-펼침 중에도 선이 텍스트에서
    떨어져 보이지 않도록, 현재 그려진 선의 두 대상(nameEl/titleEl)을 기억해뒀다가
    resize/orientationchange/ResizeObserver가 발생할 때마다 즉시 다시 그림.
@@ -1424,23 +1451,16 @@ function getTextRect(el) {
 let mLastLineNameEl = null;
 let mLastLineTitleEl = null;
 
->>>>>>> Stashed changes
 /* 뷰포트 전체에 고정된 #connecting-line-svg 위에 "이름 텍스트의 실제 우측
    끝(+4px)" ↔ "제목 텍스트의 실제 좌측 끝(-4px)"을 잇는 선을 그림 — 글자
    몸통을 침범하지 않고 글자 사이의 빈 공간만 깔끔하게 잇도록. #connecting-line-svg가
    position:fixed라 getBoundingClientRect()가 이미 이 SVG와 같은 좌표계(뷰포트
    기준)이므로 컨테이너 오프셋을 따로 빼는 계산이 필요 없음 */
-<<<<<<< Updated upstream
-function drawMobileConnectLine(nameEl, titleEl) {
-  const svg = document.getElementById('connecting-line-svg');
-  if (!svg) return;
-=======
 function drawMobileConnectLine(nameEl, titleEl, skipAnim) {
   const svg = document.getElementById('connecting-line-svg');
   if (!svg) return;
   mLastLineNameEl = nameEl;
   mLastLineTitleEl = titleEl;
->>>>>>> Stashed changes
   svg.innerHTML = '';
   svg.style.display = ''; /* 혹시 이전에 강제로 꺼져 있었더라도(person-open 잔여 상태 등) 새로 그릴 땐 항상 보이게 */
   const nameRect  = getTextRect(nameEl);
@@ -1460,11 +1480,6 @@ function drawMobileConnectLine(nameEl, titleEl, skipAnim) {
   line.setAttribute('x2', x2);
   line.setAttribute('y2', y2);
   const len = Math.max(1, Math.hypot(x2 - x1, y2 - y1));
-<<<<<<< Updated upstream
-  line.style.strokeDasharray  = len;
-  line.style.strokeDashoffset = len;
-  svg.appendChild(line);
-=======
   if (skipAnim) {
     /* [크로스 브라우징] 리사이즈/회전 도중 재계산할 때는 처음부터 다시
        그려지는(stroke-dashoffset 애니메이션이 재생) 대신 이미 완성된
@@ -1477,7 +1492,6 @@ function drawMobileConnectLine(nameEl, titleEl, skipAnim) {
   }
   svg.appendChild(line);
   if (skipAnim) return;
->>>>>>> Stashed changes
   requestAnimationFrame(() => requestAnimationFrame(() => {
     line.style.transition = 'stroke-dashoffset 0.25s cubic-bezier(0.25, 1, 0.5, 1)';
     line.style.strokeDashoffset = '0';
@@ -1786,8 +1800,6 @@ function resetDesktopPageStyle() {
   page.style.removeProperty('--page-w');
   page.style.removeProperty('--page-h');
   page.style.removeProperty('--shimmer-x');
-<<<<<<< Updated upstream
-=======
 }
 
 /* [크로스 브라우징] 화면 회전/주소창 접힘-펼침으로 리플로우가 일어나는
@@ -1812,26 +1824,24 @@ function redrawMobileConnectLineIfActive() {
 function maybeRebuildMobileListForVisibleRows() {
   if (!document.body.classList.contains('mobile-mode')) return;
   if (mConnecting) return;
-  const newN = Math.max(1, estimateVisibleRows());
+  updateMobileListMaxHeight();
+  const rows = Array.from(document.querySelectorAll('#mList .m-row'));
+  const visibleIdx = computeVisibleMobileRowIndices(rows);
+  const newN = Math.max(1, visibleIdx.length || estimateVisibleRows());
   if (newN !== mLastVisibleRowCount) {
     buildMobileList();
   }
->>>>>>> Stashed changes
 }
 
 /* ── 리사이즈 ── */
 function onResize() {
   applyResponsiveMode();
-<<<<<<< Updated upstream
-  if (isMobileViewport()) { scheduleMobileGradientMetricsUpdate(); return; } /* 모바일 모드일 땐 #page가 숨겨져 있으니 데스크톱 좌표 계산은 건너뛰고, 대신 모바일 그라데이션 좌표를 다시 잼 */
-=======
   if (isMobileViewport()) {
     maybeRebuildMobileListForVisibleRows(); /* 가시 행 수(N)가 바뀌었으면 그 범위 안에서만 다시 매칭 */
     scheduleMobileGradientMetricsUpdate(); /* 모바일 모드일 땐 #page가 숨겨져 있으니 데스크톱 좌표 계산은 건너뛰고, 대신 모바일 그라데이션 좌표를 다시 잼 */
     redrawMobileConnectLineIfActive();
     return;
   }
->>>>>>> Stashed changes
   layout();
   let maxB = 0;
   document.querySelectorAll('#colB .row-item').forEach(el => {
@@ -1993,8 +2003,6 @@ window.addEventListener('resize', onResize);
    따라오는 경우가 있어 orientationchange도 별도로 같이 들음(중복 호출돼도
    onResize/applyResponsiveMode는 멱등이라 안전함) */
 window.addEventListener('orientationchange', onResize);
-<<<<<<< Updated upstream
-=======
 
 /* [크로스 브라우징] iOS Safari는 주소창이 접히고 펼쳐질 때 window의 resize
    이벤트를 안정적으로 쏘지 않는 경우가 있어(visualViewport만 변함) —
@@ -2012,5 +2020,4 @@ if (typeof ResizeObserver !== 'undefined') {
   if (mobilePageEl) mobilePageResizeObserver.observe(mobilePageEl);
 }
 
->>>>>>> Stashed changes
 requestAnimationFrame(tickShimmer);
