@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon-v3.png"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"/>
 <link rel="stylesheet" href="css/common.css?v=2.0"/>
-<link rel="stylesheet" href="css/landing.css?v=2.9"/>
+<link rel="stylesheet" href="css/landing.css?v=3.0"/>
 </head>
 <body>
 <div id="page">
@@ -164,6 +164,15 @@
     <button type="button" class="m-tab" data-tab="posters">POSTERS</button>
     <button type="button" id="mCloseDetail" class="m-tab-close" aria-label="닫기"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L13 13M1 13L13 1" stroke="black" stroke-width="2" stroke-linecap="round"/></svg></button>
   </nav>
+  <!-- [버그 수정] 아이패드처럼 #mobilePage가 402px보다 훨씬 넓어지는 태블릿에서,
+       #mTabs 자신이 배경 페이드 그라데이션까지 같이 갖고 있으면 버튼 클러스터와
+       똑같이 402px로 좁게 잘려서 넓은 화면에선 포스터 이미지 원본 가장자리가
+       페이드 밖으로 그대로 노출되는(네모난 흰 박스처럼 보이는) 문제가 있었음.
+       배경 페이드만 담당하는 별도 전체너비 레이어(#mTabsBg)로 분리하고,
+       #mTabs 자신은 기존처럼 402px로 좁게 유지해 버튼은 그대로 중앙에 모여있게 함.
+       CSS의 #mTabs.is-bottom ~ #mTabsBg 형제 선택자가 작동하려면 #mTabsBg가
+       반드시 #mTabs *다음*에 와야 함(일반 형제 결합자는 뒤쪽 형제만 선택) -->
+  <div id="mTabsBg" aria-hidden="true"></div>
   <div id="mFooter">
     <div class="m-footer-right common-footer">
       2026 &copy; Hongik University<br>

@@ -1622,18 +1622,39 @@ body.mobile-mode #mTabs {
   bottom: 0;
   width: 100%;
   max-width: 402px; /* #mobilePage 카드 폭(피그마 402px 스펙)과 정확히 맞춤 —
-                        창이 그보다 넓어도 탭이 카드 폭 안에서만 떠 있게 함 */
+                        창이 그보다 넓어도 탭 버튼 클러스터는 항상 이 폭 안에서만
+                        중앙에 모여 떠 있음(태블릿에서도 폰과 동일하게 유지) */
   transform: translateX(-50%);
   padding: 48px 0 calc(24px + env(safe-area-inset-bottom)); /* [크로스 브라우징]
      iPhone 홈 바(노치 기종)나 안드로이드 제스처 내비게이션 바 영역과 탭
      버튼이 겹치지 않도록, 기존 24px 여백에 안전 영역만큼을 더 얹음 —
      safe-area-inset-bottom을 지원하지 않는 기기는 0으로 계산되어 기존과
      완전히 동일하게 24px만 적용됨(회귀 없음) */
-  background: linear-gradient(to top, #ffffff 65%, rgba(255, 255, 255, 0) 100%);
-  transition: background 0.3s ease;
   z-index: 100;
 }
-body.mobile-mode #mTabs.is-bottom {
+/* [버그 수정] 배경 페이드 그라데이션은 더 이상 #mTabs 자신에 걸지 않음 —
+   #mTabs가 402px로 좁게 유지되는 채로 배경까지 갖고 있으면, #mobilePage가
+   훨씬 넓은 태블릿에서 페이드가 화면 중앙 402px에만 좁게 뜨고 그 바깥
+   (포스터 이미지 등)은 페이드 없이 그대로 노출되어 네모난 흰 상자처럼
+   보이는 문제가 있었음. 아래 #mTabsBg(전체 너비 전용 레이어)로 옮김 */
+#mTabsBg { display: none; }
+body.mobile-mode #mTabsBg {
+  display: block;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 98px; /* 탭바 실측 높이(패딩 48px+24px+콘텐츠)와 동일한 값 — 버튼이
+                    떠 있는 영역 전체를 커버해 자연스럽게 페이드됨 */
+  background: linear-gradient(to top, #ffffff 65%, rgba(255, 255, 255, 0) 100%);
+  transition: background 0.3s ease;
+  pointer-events: none; /* 장식용 레이어 — 뒤 콘텐츠 클릭/스크롤을 막지 않음 */
+  z-index: 99; /* #mTabs(z-index:100) 버튼 아래, 나머지 콘텐츠보다는 위 */
+}
+/* #mTabs.is-bottom(카피라이트 푸터가 화면에 들어왔을 때, 기존 IntersectionObserver
+   로직)과 완전히 같은 타이밍에 배경 레이어도 투명해지도록 형제 선택자로 연동함
+   — JS는 그대로 #mTabs에만 클래스를 토글하면 되고 별도 수정이 필요 없음 */
+body.mobile-mode #mTabs.is-bottom ~ #mTabsBg {
   background: transparent;
 }
 .m-tab {
