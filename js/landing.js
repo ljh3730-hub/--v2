@@ -1582,9 +1582,17 @@ function applyResponsiveMode() {
   if (isMobileViewport()) {
     initMobile();
     document.body.classList.add('mobile-mode');
+    /* [기능 추가] 아이패드 세로처럼 "짧은 변이 폰 기준(600px)보다 넓은" 태블릿
+       구간에서는 모바일 카드(#mobilePage)를 402px로 고정하지 않고 더 넓게
+       채움 — body.tablet-mode 마커만 붙이고 실제 폭 값은 CSS(body.tablet-mode
+       #mobilePage)가 담당. 폰(shortSide < 600)은 이 클래스가 안 붙어 기존
+       402px 고정 그대로 유지됨 */
+    const shortSide = Math.min(window.innerWidth, window.innerHeight);
+    document.body.classList.toggle('tablet-mode', shortSide >= PHONE_SHORT_SIDE_MAX);
     resetDesktopPageStyle();
   } else {
     document.body.classList.remove('mobile-mode');
+    document.body.classList.remove('tablet-mode');
   }
 }
 

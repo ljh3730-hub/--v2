@@ -1004,6 +1004,16 @@ body.mobile-mode #mobilePage {
   color: #000000;
   word-break: keep-all;
 }
+/* [기능 추가] 아이패드 세로처럼 짧은 변이 폰 기준(600px)보다 넓은 태블릿에서는
+   카드를 402px에 가두지 않고 화면 대부분을 채움 — cqw 기반 타이포/여백
+   시스템이 이 컨테이너 자신의 폭을 기준으로 다시 계산되므로(container-type:
+   inline-size), 카드가 넓어지면 글자/여백도 같은 비율로 함께 커져서 모바일과
+   동일한 디자인 비율을 유지한 채 화면을 꽉 채움. 완전히 끝까지 붙이지 않고
+   양옆에 약간의 여백(5vw)만 남김 — 아이패드 프로 12.9인치(1024px)처럼 아주
+   넓은 화면에서 줄 길이가 지나치게 길어지지 않도록 900px을 상한으로 둠 */
+body.tablet-mode #mobilePage {
+  max-width: min(90vw, 900px);
+}
 
 #mScroll {
   flex: 1 1 auto;
