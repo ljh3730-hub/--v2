@@ -933,10 +933,11 @@ html.detail-scroll body {
    - 하단: ABOUT / POSTERS 고정 탭 — POSTERS면 리스트, ABOUT이면 소개글+크레딧
    - 이름/제목 클릭 → 그 줄에 연결선이 그어지는 짧은 애니메이션 후 자동으로 상세 페이지 이동
    ════════════════════════════════════════════════ */
-/* 실제 폰(375~430px대)보다 넓은 데스크톱 창을 그냥 줄여서 볼 때, 640px처럼 넓은
-   폭을 그대로 쓰면 "홈페이지를 억지로 줄인 것"처럼 보임(이름-제목 사이 여백만
-   불필요하게 벌어짐). 실제 폰 비율에 맞는 480px로 카드 폭을 좁히고, 그보다 넓은
-   창에서는 바깥을 회색 배경으로 채워 "폰 카드가 가운데 떠 있는" 형태로 보이게 함 */
+/* [버그 수정] 402px보다 넓은 기종(아이폰 프로맥스, 갤럭시 대화면 등)에서
+   #mobilePage 카드가 402px로 고정되고 바깥을 회색(#e5e5e5)으로 채우던 방식은
+   "카드 밖 화면 좌우에 회색 여백이 비쳐 보인다"는 문제를 낳음 — 바깥 배경을
+   카드와 동일한 흰색으로 통일해 여백이 아예 안 보이게 함(카드 자체의 402px
+   프레임 고정/중앙 정렬 로직은 타이포그래피 비율 유지를 위해 그대로 둠) */
 body.mobile-mode {
   /* height:auto가 아니라 100%(=html과 동일한 뷰포트 높이)로 고정해야 body 자신이
      실제로 내용이 넘칠 때 스스로 스크롤되는 스크롤 컨테이너가 됨(디테일모드에서
@@ -949,7 +950,8 @@ body.mobile-mode {
   width: 100%; /* [크로스 브라우징] 기기 폭이 402px보다 작거나 커도 body 자체가
      가로로 넘치지 않도록 명시적으로 고정 */
   height: 100%;
-  background: #e5e5e5;
+  background: #ffffff; /* [버그 수정] 회색(#e5e5e5) → 흰색 — 카드가 402px보다
+     넓은 화면에서 좌우에 회색 여백으로 비쳐 보이던 문제 제거 */
   /* 피그마 작업 프레임(W=402px) 기준 본문 폰트: 13px = 3.2338cqw. 화면 폭이
      늘거나 줄면 vw 성분이 그 비율 그대로 커지고 줄어들어 402px 기준 조판 비율이
      유지됨 — clamp 하한/상한(11.5~13.5px)은 아주 좁거나(360px 미만) 아주 넓은
@@ -1152,14 +1154,16 @@ body.mobile-mode .m-vertical-line::before {
        비례해서 0.35→0.18) 짧은 뷰에서도 항상 글자/세로선 대비(contrast)가
        유지되도록 함 — 27행 리스트처럼 긴 뷰의 "빛이 지나가며 번지는" 느낌은
        동일하게 유지됨(reach 불변, 밝기만 완화) */
-    rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.18) 40%, rgba(255, 255, 255, 0) 75%);
+    rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.38) 40%, rgba(255, 255, 255, 0) 75%); /* [강화 3차] 요청 수치(0.8~0.85대)에 최대한 가깝게 더 올림(0.6->0.75, 0.25->0.38). 화이트아웃(#95)을 냈던 0.95는 여전히 피함. 색 자체는 이미 순수 흰색(255,255,255)이라 더 밝게 바꿀 여지는 없고 투명도만 조절 가능 - 실측해보면 이 효과는 화면 전체가 아니라 공유 원과의 거리에 따라 그 순간 1~2줄만 밝아지는 구조라 나머지는 항상 검정으로 남음, 이게 안 보인다고 느껴지는 주된 이유로 보임(수치만으로는 이 구조 자체는 안 바뀜) */
 }
 .m-header-left {
   /* 선 위치(x=14) + 7px 여백 = x=21, 402px 기준 5.2239cqw로 하나로 합침 —
      402px 이상에서는 정확히 21px로 캡되고, 그 미만에서는 프레임 축소
      비율 그대로 비례해서 줄어듦(선-텍스트 간격도 함께 비례 축소되어
      "그대로 축소"된 것처럼 보임) */
-  padding-left: 5.2239cqw; /* 21px / 402px */
+  margin: 0; /* [버그 수정] 좌측 상단 타이틀 컨테이너에 의도치 않은 margin이
+                끼어들 여지를 명시적으로 차단 */
+  padding: 0 0 0 5.2239cqw; /* 21px / 402px */
   text-align: left;
 }
 .m-header-right {
@@ -1183,57 +1187,75 @@ body.mobile-mode .m-vertical-line::before {
   font-family: var(--font-ko);
   font-size: 3.2338cqw; /* 13px / 402px */
   font-weight: 500;
-  line-height: 4.9751cqw; /* 20px / 402px */
+  line-height: 4.9751cqw; /* 20px / 402px = 1.538배 — 피그마 스펙과 정확히 일치 */
   letter-spacing: 0;
   text-align: left;
   color: #000000;
+  margin: 0; /* [버그 수정] div 기본 margin은 0이지만, 아래 title-en의 여백을
+                margin-top이 아니라 title-ko의 margin-bottom 하나로만 명시적으로
+                통일해 이중으로 여백이 겹치지 않게 함 */
+}
+/* [버그 수정] 기존 margin-top:0.25rem(고정 4px, 루트 폰트 크기 기준이라 402px
+   프레임 축소 비율을 안 따라감)이 20px line-height의 half-leading(위/아래
+   약 3.5px씩)과 겹쳐 한글-영문 사이 간격이 피그마보다 넓고 화면 폭에 따라
+   비율이 안 맞게 "붕 떠 보이는" 원인이었음. 피그마 실측 2px 간격을 다른 모든
+   여백과 동일하게 402px 기준 cqw로 고정해, 폭이 줄어도 항상 정확히 같은
+   비율로 줄어들게 함 */
+.m-title-ko {
+  margin-bottom: 0.4975cqw; /* 2px / 402px */
 }
 .m-title-en {
-  margin-top: 0.25rem; /* 4px 상당 */
+  margin-top: 0;
+}
+/* [스크롤 페이드 마스크] 헤더(#mHeader, sticky)는 랜딩/POSTERS/ABOUT/개인상세
+   4개 뷰가 전부 공유하는 하나의 요소라, 여기 한 곳에만 적용해도 모든 뷰의
+   "콘텐츠가 헤더 밑으로 스크롤되어 사라지는" 지점이 공통으로 부드러워짐 —
+   헤더 자체는 계속 완전 불투명(#fff)이라 텍스트/세로선이 흐려지지 않고
+   선명하게 유지됨(요청 3번 항목: 헤더 레이어 분리). pointer-events:none이라
+   헤더 바로 아래 첫 줄 클릭도 그대로 통과됨 */
+.m-header-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: translateY(100%);
+  height: 28px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+/* [동적 스크롤 페이드] JS(updateBodyScrollFade)가 body.scrollTop<=5일 때
+   body에 붙이는 is-scroll-top 상태 — 맨 위(스크롤 전)에는 헤더 밑으로
+   가려질 콘텐츠가 아직 없으므로 오버레이를 꺼서 텍스트가 100% 선명하게 보임 */
+body.mobile-mode.is-scroll-top .m-header-fade {
+  opacity: 0;
 }
 
-/* #mList: 27개 항목을 순수 flex 세로 스택으로 위에서부터 차곡차곡 쌓음(간격 없음).
-   height는 100%/100vh 같은 세로 확장 속성을 일절 주지 않아, 뷰포트가 리스트
-   실제 내용보다 길어도(예: 큰 화면) 억지로 늘어나지 않고 콘텐츠 높이만큼만 자람 */
+/* [버그 수정 - 가시 행 제한 로직 완전 삭제] 예전엔 #mList 자신이 화면 높이에
+   맞춘 max-height + overflow-y:auto로 "헤더/탭바 사이 안에서만" 자체 스크롤되는
+   별도의 작은 스크롤 상자였음(JS가 매번 헤더/탭바 좌표를 재서 --m-list-max-h를
+   넣어줌). 이 방식은 화면이 짧으면 리스트가 압박되어 보이고, ABOUT/POSTERS/
+   개인상세(전부 body가 스크롤하는 자연스러운 방식)와 스크롤 동작이 서로 달라
+   일관성이 없었음. 이제 #mList는 다른 3개 뷰와 완전히 동일하게 높이 제한/자체
+   스크롤 없이 순수 flex 세로 스택으로만 존재하고, 27행 전체가 자연스러운
+   문서 흐름으로 이어지며 body 스크롤 하나로 통일됨(상/하단 페이드도 이제
+   다른 뷰와 동일하게 .m-header-fade + #mTabs 그라데이션이 그대로 담당) */
 #mList {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   height: auto;
   margin-top: 4.5cqw; /* 18px / 402px — ABOUT 기조문/POSTERS 그리드/개인상세
-                          갤러리와 동일한 값. 랜딩 리스트만 이 여백이 없어서
-                          첫 항목이 헤더에 바로 붙어버리던(gap=0) 버그를 수정 */
-  /* [버그 수정] 화면 높이가 짧은 스마트폰에서 27개 행이 잘리지 않도록,
-     상단 헤더(#mHeader, sticky)/하단 탭바(#mTabs, fixed)를 제외한 나머지
-     높이만큼만 리스트가 차지하고 그 안에서 자체적으로 스크롤되게 함.
-     --m-list-max-h는 JS(updateMobileListMaxHeight)가 헤더 하단/탭바 상단의
-     실제 좌표 차이로 매번 정밀 계산해서 넣어줌(헤더/탭바 높이가 cqw 비례라
-     기기마다 달라서 고정 px로는 정확히 맞지 않음) — JS 실행 전 최초 페인트
-     등 값이 없을 때만 calc(100vh - 180px)로 폴백 */
-  max-height: var(--m-list-max-h, calc(100vh - 180px));
-  max-height: var(--m-list-max-h, calc(100dvh - 180px)); /* [크로스 브라우징] 동적 뷰포트
-     높이 단위 지원 브라우저(대부분의 최신 모바일 Safari/Chrome)에서는 주소창이
-     늘어나고 줄어들 때도 레이아웃이 찌그러지지 않도록 100dvh로 덮어씀 —
-     미지원 브라우저는 이 줄 자체가 무효화되어 위 100vh로 자연 폴백됨.
-     실제로는 JS(updateMobileListMaxHeight)가 --m-list-max-h를 항상 정밀하게
-     다시 계산해서 넣어주므로 이 calc()들은 JS 실행 전 최초 페인트 순간에만 씀 */
-  overflow-y: auto;
-  /* [버그 수정] overscroll-behavior:contain은 이 리스트를 끝까지 스크롤한
-     뒤 계속 스크롤 제스처(휠/터치)를 이어가도, 그 스크롤이 바깥 body로
-     "이어지지 않도록" 완전히 차단해버림 — 그 결과 실제 사용자가 리스트
-     영역 위에서 계속 스크롤해도 몸통(body) 스크롤이 전혀 진행되지 않아
-     푸터에 영원히 도달할 수 없었음(스크롤 체이닝 차단 버그). 이게 "카피라이트
-     푸터가 안 보인다" 반복 신고의 진짜 원인이었음 — 이전 검증은 JS로
-     scrollTop을 직접 대입해서 확인했기 때문에 이 문제를 못 잡아냈음. 기본값
-     (auto)으로 되돌려서 리스트를 다 스크롤한 뒤엔 자연스럽게 body 스크롤로
-     이어지도록 함 */
-  -webkit-overflow-scrolling: touch;
+                          갤러리와 동일한 값 */
   width: 100%;
 }
 .m-row {
-  /* 피그마 402px 프레임 기준 한글 본문 스펙(13px/22px) — cqw 비례라 402px
-     이상에서는 정확히 13px/22px로 캡되고, 그 미만에서는 프레임 축소
-     비율 그대로 줄어들어 줄바꿈 위치가 402px 기준과 항상 동일하게 유지됨 */
+  /* [피그마 타이포그래피 정밀 반영] 랜딩 A(참여자)-B(작품명) 리스트 전용
+     스펙 — 13px/26px(line-height 배수 2.0), 다른 본문 텍스트(22px/13px≈1.692)
+     와는 다른 이 리스트만의 값. cqw 비례라 402px 이상에서는 정확히
+     13px/26px로 캡되고, 그 미만에서는 프레임 축소 비율 그대로 줄어들어
+     402px 기준과 항상 동일한 비율을 유지함 */
   align-items: baseline;
   margin: 0;
   padding: 0;
@@ -1242,7 +1264,7 @@ body.mobile-mode .m-vertical-line::before {
   font-family: var(--font-ko);
   font-size: 3.2338cqw; /* 13px / 402px */
   font-weight: 500;
-  line-height: 5.4726cqw; /* 22px / 402px */
+  line-height: 6.4677cqw; /* 26px / 402px (13px * 2.0) */
   letter-spacing: 0;
   cursor: pointer;
   position: relative;
@@ -1283,18 +1305,17 @@ body.mobile-mode .m-vertical-line::before {
   .m-row-title { padding-right: max(2.5cqw, 8px); }
 }
 /* [버그 수정] A/B 항목을 탭/클릭했을 때 텍스트 뒤에 회색 형광펜처럼 깔리던
-   배경 하이라이트 박스(.m-row.connecting{background:#f4f4f4})를 완전히 제거함 —
-   클릭 시에는 오직 SVG 연결 선만 나타나야 하고, 텍스트 자체의 배경은 항상
-   투명해야 함. 모바일 터치 시 브라우저가 기본으로 씌우는 회색/파란 탭
-   하이라이트도 별도로 차단(-webkit-tap-highlight-color)하고, 포커스/액티브
-   상태의 outline/배경도 전부 투명으로 강제해 어떤 상호작용 상태에서도
-   배경색이 생기지 않게 함 */
+   배경 하이라이트 박스를 완전히 제거함 — 텍스트 자체의 배경은 항상 투명해야
+   함. 모바일 터치 시 브라우저가 기본으로 씌우는 회색/파란 탭 하이라이트도
+   별도로 차단(-webkit-tap-highlight-color)하고, 포커스/액티브 상태의
+   outline/배경도 전부 투명으로 강제해 어떤 상호작용 상태에서도 배경색이
+   생기지 않게 함. [기능 제거] 예전엔 클릭 시 SVG 연결선이 뜨는 동안
+   .m-row.connecting 클래스로 짧게 강조 효과를 줬는데, 이제 클릭하면 곧바로
+   상세 페이지로 이동하므로(더 이상 연결선이 없음) 그 강조 규칙도 함께
+   제거함 */
 .m-row,
 .m-row-name,
 .m-row-title,
-.m-row.connecting,
-.m-row.connecting .m-row-name,
-.m-row.connecting .m-row-title,
 .m-row-name:focus,
 .m-row-title:focus,
 .m-row-name:active,
@@ -1303,13 +1324,6 @@ body.mobile-mode .m-vertical-line::before {
   background: none !important;
   outline: none !important;
   -webkit-tap-highlight-color: transparent !important; /* 모바일 터치 시 회색/파란 박스 방지 */
-}
-/* 탭 시 짧게 "연결선"이 그어지는 느낌은 배경이 아니라 텍스트 색만으로 표현 —
-   이름/제목 색이 순간 진해졌다가(원래도 검정이라 사실상 유지) 페이지 전환 */
-.m-row.connecting .m-row-name,
-.m-row.connecting .m-row-title {
-  color: #000000;
-  transition: color 0.3s ease;
 }
 
 /* ABOUT 탭 콘텐츠: 세로 흐름(flow) 컨테이너 — [기조글] 다음에 [학과/
@@ -1347,15 +1361,15 @@ body.mobile-mode .m-vertical-line::before {
                           값(단위까지 통일: rem이 아니라 cqw)으로 맞춰, 헤더
                           아래 본문 시작 Y축이 모든 페이지에서 완전히 일치하게 함 */
   margin-left: 3.4826cqw; /* 14px / 402px */
-  /* [버그 수정] 기존엔 피그마 스펙 그대로 651px(161.9403cqw)로 높이를 고정했는데,
-     이 값은 402px 기준 특정 줄바꿈 결과를 전제로 계산된 값이라 실제 문단이 그보다
-     짧은 화면(측정 결과 iPhone SE~15 Pro Max 전 구간에서 약 220px 더 짧음)에서는
-     세로선(border-left)이 마지막 문장보다 한참 아래까지 빈 여백 위로 계속 그려져
-     "글자와 무관하게 뜬금없이 끊기는" 것처럼 보였음. height를 콘텐츠 높이를
-     그대로 따라가는 auto로 바꿔서, 선이 항상 정확히 마지막 문장 끝에서 멈추도록
-     수정 — 이후 화면 폭/폰트 스케일이 달라져 줄바꿈 수가 바뀌어도 항상 실제
-     콘텐츠와 정확히 일치함 */
-  height: auto;
+  /* [히어로 뷰 스펙 정정] 이전엔 이 박스에 "뷰포트 높이 - 140px" 최소값을
+     걸어서 서문 다음에 오는 지도교수/참여자 크레딧까지 전부 화면 밖으로
+     밀어냈었는데, 실제 의도는 그게 아니라 서문+크레딧은 첫 화면에 다 보이고
+     "카피라이트 푸터 한 줄만" 스크롤해야 보이는 것이었음 — 그래서 뷰포트
+     기반 강제 인플레이션은 제거하고, 피그마 402px 프레임 기준 651px 고정
+     최소값(161.9403cqw)만 남김(문단이 더 길면 자유롭게 늘어남). 푸터를
+     화면 밖으로 미는 로직은 아래 #mAboutFooter 쪽으로 옮김(JS,
+     updateAboutFooterPush) */
+  min-height: 161.9403cqw; /* 651px / 402px */
   border-left: 1px solid #000000;
   padding-top: 0;
   padding-left: 1.7413cqw; /* 7px / 402px */
@@ -1513,7 +1527,7 @@ body.mobile-mode .m-vertical-line::before {
   padding-left: 1.7413cqw; /* 7px / 402px */
   text-align: left;
   font-family: var(--font-en); /* Neue Haas Grotesk Text Pro */
-  font-weight: 400;
+  font-weight: 450; /* 55 Roman — 피그마 정밀 스펙 */
   font-size: 2.7363cqw; /* 11px / 402px */
   line-height: 3.9801cqw; /* 16px / 402px */
   letter-spacing: -0.01em;
@@ -1534,36 +1548,6 @@ body.mobile-mode .m-vertical-line::before {
 .landing-page { background: #fff; }
 .about-page { background: #fff; }
 
-/* 이름/작품 제목 클릭 시 실제 짝을 찾아가는 연결선: 화면(뷰포트) 전체에 고정된
-   SVG 한 장을 body 최상단에 두고, 두 텍스트의 getBoundingClientRect() 중심좌표를
-   그대로 써서 그림 — #mScroll 스크롤 위치나 카드 폭과 무관하게 항상 실제 보이는
-   위치에 정확히 그려짐. 탭바(z-index:100)보다도 위에 오도록 z-index를 더 높게 둠 */
-#connecting-line-svg {
-  display: none;
-}
-body.mobile-mode #connecting-line-svg {
-  display: block;
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh; /* [크로스 브라우징] 동적 뷰포트 높이 — 주소창 접힘/펼침 시에도
-     연결선 SVG가 항상 실제 화면 전체를 정확히 덮도록 함(미지원 브라우전 지원은
-     이 줄이 무효화되어 위 100vh로 자연 폴백) */
-  pointer-events: none;
-  /* [버그 수정] 화면 가시 영역 내 매칭(computeVisibleMobileRowIndices)으로
-     선의 두 끝점이 항상 뷰포트 안에 오도록 이미 보장하고 있지만, 혹시 모를
-     경우(레이아웃 예외/서브픽셀 오차 등)에 대비해 SVG 자체도 뷰포트 밖으로는
-     아무것도 그리지 않도록 마지막 방어선을 둠 — overflow:visible이던 걸
-     hidden으로 바꿔 SVG 뷰포트(정확히 100vw×100dvh) 밖의 좌표는 렌더링
-     단계에서 아예 잘려나가게 함 */
-  overflow: hidden;
-  z-index: 200;
-}
-#connecting-line-svg line {
-  stroke: #000000;
-  stroke-width: 1;
-}
 
 /* 하단 탭: 화면 최하단에 고정된 그라데이션 컨테이너 — 컨테이너 자체 배경이
    위로 갈수록 투명해지는 페이드라, 그 아래로 지나가는 리스트 텍스트가
@@ -1759,13 +1743,6 @@ body.mobile-mode #mFooter {
   margin-top: 4.5cqw;
 }
 
-/* 방어적 이중 처리: 상세 페이지가 열려 있는 동안(#mobilePage.person-open)에는
-   JS가 svg.innerHTML을 비우고 display:none도 직접 주지만, 혹시 모를 경우를
-   대비해 CSS 레벨에서도 연결선 SVG를 강제로 완전히 숨김 — 랜딩 화면의 선이
-   상세 페이지 위로 절대 비쳐 보이지 않도록 함 */
-#mobilePage.person-open ~ #connecting-line-svg {
-  display: none !important;
-}
 .m-person-video {
   display: inline-block;
   margin-top: 20px;
@@ -1827,7 +1804,17 @@ body.mobile-mode #mFooter {
   column-gap: 1.5cqw;
   row-gap: 28px;
 }
-.m-poster-item { display: flex; flex-direction: column; }
+.m-poster-item {
+  display: flex;
+  flex-direction: column;
+  cursor: pointer; /* [기능 추가] 이미지+캡션 전체가 클릭 가능(개인 상세 페이지 이동) */
+}
+/* 클릭 시 모바일 기본 회색/파란 탭 하이라이트 방지 — 랜딩 리스트(.m-row)와 동일 처리 */
+.m-poster-item,
+.m-poster-item img,
+.m-poster-caption {
+  -webkit-tap-highlight-color: transparent;
+}
 .m-poster-item img {
   width: 100%;
   aspect-ratio: 210 / 297; /* 실제 포스터 대부분의 비율(A4 계열) — 데스크톱과 동일 상수 */
@@ -1896,7 +1883,7 @@ body.mobile-mode :is(
        비례해서 0.35→0.18) 짧은 뷰에서도 항상 글자/세로선 대비(contrast)가
        유지되도록 함 — 27행 리스트처럼 긴 뷰의 "빛이 지나가며 번지는" 느낌은
        동일하게 유지됨(reach 불변, 밝기만 완화) */
-    rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.18) 40%, rgba(255, 255, 255, 0) 75%);
+    rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.38) 40%, rgba(255, 255, 255, 0) 75%); /* [강화 3차] 요청 수치(0.8~0.85대)에 최대한 가깝게 더 올림(0.6->0.75, 0.25->0.38). 화이트아웃(#95)을 냈던 0.95는 여전히 피함. 색 자체는 이미 순수 흰색(255,255,255)이라 더 밝게 바꿀 여지는 없고 투명도만 조절 가능 - 실측해보면 이 효과는 화면 전체가 아니라 공유 원과의 거리에 따라 그 순간 1~2줄만 밝아지는 구조라 나머지는 항상 검정으로 남음, 이게 안 보인다고 느껴지는 주된 이유로 보임(수치만으로는 이 구조 자체는 안 바뀜) */
 }
 /* [그라데이션 연동] .common-footer(하단 카피라이트)는 자기 자신의 border-left
    (x=186 세로선)를 갖는데, absolute ::before(inset:0)는 기본적으로 padding

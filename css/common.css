@@ -21,6 +21,12 @@ html, body {
   height: 100%;
   overflow: hidden;
   background: #fff;
+  /* [피그마 타이포그래피 정밀 반영] iOS/Android 브라우저에서 Pretendard/NHG
+     같은 얇은 굵기 폰트가 실제보다 두껍거나 번져 보이는 렌더링 차이를
+     평탄화 — 데스크톱/모바일 전 페이지 공통이라 body 전역에 적용 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* 수평 구분선 - 모든 페이지 공통 */

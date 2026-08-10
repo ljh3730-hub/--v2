@@ -8,8 +8,8 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16-v3.png"/>
 <link rel="apple-touch-icon" href="assets/apple-touch-icon-v3.png"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"/>
-<link rel="stylesheet" href="css/common.css?v=20260728a"/>
-<link rel="stylesheet" href="css/landing.css?v=202608099e"/>
+<link rel="stylesheet" href="css/common.css?v=2.0"/>
+<link rel="stylesheet" href="css/landing.css?v=2.0"/>
 </head>
 <body>
 <div id="page">
@@ -128,6 +128,12 @@
            침투 못함) -->
       <div class="m-vertical-line m-header-line-right"></div>
       <div class="m-header-right" id="mHeaderDate"></div>
+      <!-- [스크롤 페이드 마스크] 헤더(sticky) 바로 아래로 스크롤되어 사라지는
+           콘텐츠(리스트/ABOUT/POSTERS/상세 전부 공유하는 이 헤더 하나만 있으면
+           됨)가 뚝 끊기지 않고 부드럽게 페이드되도록, 헤더 자신의 하단 바깥쪽에
+           흰색→투명 그라데이션을 겹쳐 얹음. 헤더가 sticky라 이 자식 요소도
+           함께 항상 같은 화면 위치(헤더 바로 아래)에 고정되어 보임 -->
+      <div class="m-header-fade" aria-hidden="true"></div>
     </div>
     <!-- 기본(랜딩) 화면: 이름/작품 제목 연결선 리스트 — 탭과 무관한 기본 상태라
          ABOUT/POSTERS 어느 쪽도 활성/밑줄 표시되지 않음 -->
@@ -167,8 +173,6 @@
   </div>
 </div>
 
-<svg id="connecting-line-svg" xmlns="http://www.w3.org/2000/svg"></svg>
-
-<script src="js/landing.js?v=202608099e"></script>
+<script src="js/landing.js?v=2.0"></script>
 </body>
 </html>

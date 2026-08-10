@@ -1171,14 +1171,12 @@ const PHONE_SHORT_SIDE_MAX = 600; /* 짧은 변(가로/세로 중 작은 값)이
 const TABLET_MAX_WIDTH    = 1366; /* 긴 변이 이 폭(px)까지는 "태블릿 구간" — 세로/가로 방향에 따라
                                       자동 전환(iPad 계열 세로 768~1024px, 가로 1024~1366px 포괄).
                                       이보다 크면(=일반 데스크톱/노트북 화면) 방향과 무관하게 웹 버전 */
-const MOBILE_CONNECT_MS = 280; /* 선이 다 그어진 뒤 상세 페이지로 넘어가기까지 지연(스펙: 250~300ms) */
-const MOBILE_LINE_START_GAP = 4; /* A열(이름) 우측 끝에서 선을 얼마나 띄울지(px) */
-const MOBILE_LINE_END_GAP   = 6; /* B열(작품 제목) 좌측 끝에서 선을 얼마나 띄울지(px) — 긴 문장일수록
-                                     여유를 더 둬야 글자 위를 지나지 않아서 시작점(4px)보다 넉넉하게 잡음 */
 let mobileInited = false;
-let mNameOrder  = []; /* row(index) → DATA index, 이름 칸 */
-let mTitleOrder = []; /* row(index) → DATA index, 작품 제목 칸 */
-let mConnecting = false; /* 연결 애니메이션 진행 중 재클릭 방지 */
+let mRowOrder = []; /* row(index) → DATA index — [버그 수정] 예전엔 이름/제목이 서로 다른
+   행에 독립적으로 섞여있어(mNameOrder/mTitleOrder 분리) 클릭하면 진짜 짝을 찾아 SVG
+   선을 그리는 "발견" 상호작용이었음. 이제는 각 행이 처음부터 같은 사람의 이름+작품명을
+   함께 보여주는 단순 1:1 목록으로 바뀌어서, 행 순서 하나만 셔플하면 됨 */
+let mNavigating = false; /* 상세 페이지로 이동 중 중복 클릭 방지 */
 let mSavedScrollTop = 0;       /* 상세 페이지 열기 직전의 랜딩 스크롤 위치 (닫을 때 복원) */
 let mLandingHeaderLeftHTML  = ''; /* #mHeader 1단(전시 제목) 원래 내용 캐시 */
 let mLandingHeaderRightHTML = ''; /* #mHeader 2단(날짜) 원래 내용 캐시 */
@@ -1216,303 +1214,47 @@ function isMobileViewport() {
   return false;
 }
 
-/* ── 인근 행 거리 제한 매칭(Row-Offset Bounded Shuffle): 27명을 완전히
-   무작위로 섞으면(예: 2번째 줄 ↔ 20번째 줄) 스크롤 위치에 따라 짝이 화면
-   밖으로 벗어나 선이 위/아래로 삐져나가는 문제가 생김. 그래서 "이름이 있는
-   행(r)"과 "그 사람의 진짜 제목이 있는 행(s)"의 차이 |r-s|를 화면에 스크롤
-   없이 보이는 행 수를 넘지 않는 작은 값(최대 2~3줄)으로 강제 제한함 —
-   어디를 스크롤해서 클릭하든 짝은 항상 같은 화면 안에 있음이 보장됨 ── */
-
-/* 헤더(sticky)/하단 탭(fixed)을 뺀 순수 바디 높이를 행 높이로 나눠서, 이
-   기기 화면에 스크롤 없이 동시에 보이는 최대 행 수(maxVisibleRows)를 계산.
-   예: 순수 바디 높이 480px, 행 높이 26px → maxVisibleRows = floor(480/26) = 18줄
-   아이폰 SE처럼 화면이 짧은 기기는 이 값이 작게(예: 8) 나오고, Pro Max처럼
-   화면이 긴 기기는 크게(예: 20+) 나옴 — 이 값을 기준으로 아래 buildMobileList의
-   행 거리 제한(maxOffset)이 기기별로 자동 조정됨 */
-function estimateVisibleRows() {
-  const ROW_H = 26; /* 402px 기준 행 높이(px) — 실제로는 clamp로 미세 변동하지만 근사치면 충분 */
-  const header = document.getElementById('mHeader');
-  const tabs   = document.getElementById('mTabs');
-  const headerHeight = header ? header.offsetHeight : 120;
-  const footerHeight = tabs   ? tabs.offsetHeight   : 90; /* 하단 고정 탭 = "footer" 역할 */
-  const BUFFER = 16; /* 탭 그라데이션 여유분 */
-  const bodyHeight = window.innerHeight - headerHeight - footerHeight - BUFFER;
-  return Math.max(1, Math.floor(bodyHeight / ROW_H));
-}
-
-/* 최대 displacement가 maxOffset을 넘지 않는 무작위 순열을 생성(레거시 —
-   더 이상 buildMobileList에서 쓰이지 않지만, 다른 곳에서 참조할 가능성을
-   대비해 함수 자체는 남겨둠). result[pos] = 그 위치에 배정된 원래 인덱스이며,
-   항상 |pos - result[pos]| <= maxOffset */
-function boundedPermutation(n, maxOffset) {
-  const result = new Array(n).fill(-1);
-  const pool = [];
-  let nextVal = 0;
-  for (let pos = 0; pos < n; pos++) {
-    while (nextVal < n && nextVal <= pos + maxOffset) {
-      pool.push(nextVal);
-      nextVal++;
-    }
-    /* 이번 자리를 넘기면 거리 제한을 어기게 되는(마감 임박) 후보가 있으면 그걸 먼저 씀 */
-    let idx = pool.findIndex(v => v + maxOffset === pos);
-    if (idx === -1) idx = Math.floor(Math.random() * pool.length);
-    result[pos] = pool[idx];
-    pool.splice(idx, 1);
-  }
-  return result;
-}
-
-/* ── 가시 영역 한정 + 파격적 대각선 매칭(Chunked Far-Biased Permutation) ──
-   처음엔 boundedPermutation처럼 "자기 자신 위치 기준 ±maxOffset" 슬라이딩
-   윈도우로 시도했는데, 이 방식은 함정이 있음: 화면 맨 위(0번째 행)는 창이
-   [0, maxOffset]으로 화면 안에 잘 들어맞지만, 화면 맨 아래 경계(N-1번째 행,
-   스크롤 없이 보이는 마지막 행)는 창이 [N-1-maxOffset, N-1+maxOffset]까지
-   넓어져서 실제로는 화면 훨씬 아래(스크롤해야 보이는 행)까지 짝이 될 수 있었음
-   (헤드리스 테스트로 실측 확인: 화면 맨 아래 행을 클릭하면 선이 뷰포트 밖으로
-   나가는 경우가 실제로 있었음). 그래서 "각 행 기준 슬라이딩 윈도우"가 아니라
-   "화면 맨 위(0번째)부터 고정된 크기(N)로 자르는 블록(청크)" 방식으로 교체함:
-   27명을 [0..N-1], [N..2N-1], ... 크기 N짜리 블록으로 나누고, 각 블록
-   내부에서만(다른 블록과는 절대 안 섞이게) farBiasedPermutation으로 대각선
-   크로스 매칭을 함 — 스크롤 없이 보이는 첫 화면(0~N-1행)은 그 화면 안의
-   행끼리만 짝이 되는 게 100% 보장되고, 그다음 화면(N~2N-1행) 역시 마찬가지로
-   자기들끼리만 짝이 됨. 블록 안에서는 여전히 위/아래로 과감하게 교차하는
-   대각선 크로스 라인 느낌이 그대로 살아있음 */
-function chunkedFarBiasedPermutation(n, chunkSize) {
-  const result = new Array(n).fill(-1);
-  for (let start = 0; start < n; start += chunkSize) {
-    const size = Math.min(chunkSize, n - start);
-    const localPerm = farBiasedPermutation(size); /* localPerm[i]는 [0,size) 범위의 로컬 인덱스 */
-    for (let i = 0; i < size; i++) {
-      result[start + i] = start + localPerm[i];
-    }
-  }
-  return result;
-}
-
-/* ── 파격적 대각선 크로스 매칭(Far-Biased Permutation) ──
-   기존 boundedPermutation(maxOffset=1)은 "짝이 항상 바로 옆 줄"이라 화면이
-   잘리는 걸 막았지만, 그 대가로 연결선이 전부 거의 수평인 짧은 평행선이 되어
-   심심했음. 이제 화면 세로 비율이 충분하므로 그 반대로: 각 자리(pos)에 값을
-   배정할 때 "아직 안 쓰인 값들" 중 pos와 거리가 먼 값일수록 뽑힐 확률이 훨씬
-   높도록(거리의 세제곱에 비례하는 가중치) 가중 랜덤 추첨을 함 — 완전히
-   기계적으로 위/아래 절반을 맞바꾸는 고정 패턴이 아니라, 매번 다른 대각선
-   교차 패턴이 나오면서도 "위쪽 A ↔ 아래쪽 B, 아래쪽 A ↔ 위쪽 B" 같은 과감한
-   크로스 라인이 압도적 비율을 차지하게 됨. 처리 순서 자체도 섞어서(positions
-   셔플) 앞쪽 자리부터 순서대로 채울 때 생기는 체계적 편향을 없앰 */
-function farBiasedPermutation(n) {
-  const pool = Array.from({ length: n }, (_, i) => i);
-  const result = new Array(n).fill(-1);
-  const positions = shuffle(Array.from({ length: n }, (_, i) => i));
-  positions.forEach(pos => {
-    const weights = pool.map(v => Math.pow(Math.abs(v - pos), 3) + 1); /* +1: 같은 자리라도 0 확률이 되지 않게(완전 배제는 안 함) */
-    const total = weights.reduce((a, b) => a + b, 0);
-    let r = Math.random() * total;
-    let chosen = 0;
-    for (let i = 0; i < weights.length; i++) {
-      r -= weights[i];
-      if (r <= 0) { chosen = i; break; }
-    }
-    result[pos] = pool[chosen];
-    pool.splice(chosen, 1);
-  });
-  return result;
-}
-
-let mLastVisibleRowCount = null; /* 마지막으로 buildMobileList를 만들 때 쓴 가시 행 수(N) —
-   리사이즈/회전 때 이 값이 바뀌면 청크 경계 자체가 달라지므로 리스트를 다시 섞음 */
-
-/* [버그 수정] 실제 화면에 보이는(In-Viewport) 행만 Strict 필터링: 기존
-   estimateVisibleRows()는 헤더/탭바 높이를 실측하되 "행 높이"만은 26px
-   고정 근사치를 썼음(실제 렌더링 값과 미세하게 어긋나면 화면 맨 아래 경계의
-   행 하나가 오차로 잘못 포함/제외될 수 있음). 근사식 대신 리스트 컨테이너
-   (#mList, 실제 스크롤 가능 영역)의 getBoundingClientRect()와 각 .m-row의
-   getBoundingClientRect()를 직접 비교해서 "상단 헤더 아래, 하단 탭바 위
-   눈에 보이는 영역 안에 완전히 들어오는 행"만 골라냄 — 근사가 아니라 실측이라
-   기기/폰트 스케일이 달라져도 항상 정확함. rows가 위→아래 DOM 순서로
-   쌓여있으므로(#mList는 flex-column, order 속성 없음) 한 번 범위를 벗어나면
-   그 뒤 행은 확인할 필요 없이 바로 멈춤 */
-function computeVisibleMobileRowIndices(rows) {
-  const list = document.getElementById('mList');
-  if (!list || rows.length === 0) return [];
-  const listContainerRect = list.getBoundingClientRect();
-  const visibleIndices = [];
-  for (let i = 0; i < rows.length; i++) {
-    const rect = rows[i].getBoundingClientRect();
-    if (rect.top >= listContainerRect.top - 0.5 && rect.bottom <= listContainerRect.bottom + 0.5) {
-      visibleIndices.push(i);
-    } else if (visibleIndices.length > 0) {
-      break;
-    }
-  }
-  return visibleIndices;
-}
-
+/* [버그 수정] 예전엔 이름/제목을 서로 다른 행에 독립적으로 섞어두고(mNameOrder/
+   mTitleOrder), 클릭하면 같은 사람의 진짜 짝을 다른 칸에서 찾아 SVG 대각선을
+   그리는 "발견" 상호작용이었음(파격적 대각선 크로스 매칭 + 화면 가시 영역
+   한정 알고리즘까지 여러 차례 다듬었던 기능). 이번 요청으로 모바일에서만 이
+   개념을 완전히 걷어내고, 각 행이 처음부터 같은 사람의 이름+작품명을 나란히
+   보여주는 단순 1:1 목록으로 바꿈 — 그래서 이름/제목을 따로 섞고 화면 안에
+   붙잡아두기 위한 코드(estimateVisibleRows/boundedPermutation/
+   farBiasedPermutation/chunkedFarBiasedPermutation/computeVisibleMobileRowIndices)
+   와 SVG 연결선을 긋던 코드(connectMobilePair/getTextRect/drawMobileConnectLine/
+   mLastLineNameEl 등)가 전부 필요 없어져 삭제함. 데스크톱(#linesSvg 등)은
+   완전히 별개의 코드라 그대로 유지됨 */
 function buildMobileList() {
-  updateMobileListMaxHeight(); /* 측정 직전 #mList의 실제 가시 높이(--m-list-max-h)를 최신 상태로 갱신 */
-
   const list = document.getElementById('mList');
   list.innerHTML = '';
 
-  /* 1단계: 실제 행 DOM을 임시 순서(0..26, 셔플 전)로 먼저 그려 넣음 — 줄
-     높이(line-height)는 내용과 무관하게 고정이라, 최종 셔플 결과가 정해지기
-     전에도 이 임시 배치로 "몇 번째 행까지 화면에 보이는지" 정확히 측정할 수
-     있음(측정 후 3단계에서 같은 DOM에 최종 이름/제목만 덮어씀) */
-  const tempRows = [];
-  for (let r = 0; r < DATA.length; r++) {
+  /* 새로고침(진입)할 때마다 27명의 세로 배치 "순서"만 무작위로 섞음 —
+     이름/제목은 항상 같은 사람끼리 한 행(.m-row)에 나란히 표시되므로
+     (A는 좌측 정렬, B는 우측 정렬), 더 이상 행 사이 매칭을 계산할 필요가
+     없음 */
+  const order = shuffle(DATA.map((_, i) => i));
+  mRowOrder = order;
+
+  order.forEach(pi => {
     const row = document.createElement('div');
     row.className = 'm-row';
+    row.dataset.pi = pi;
     row.innerHTML =
-      `<span class="m-row-name">${DATA[r].name}</span>` +
-      `<span class="m-row-title">${DATA[r].koTitle || ''}</span>`;
+      `<span class="m-row-name">${DATA[pi].name}</span>` +
+      `<span class="m-row-title">${DATA[pi].koTitle || ''}</span>`;
+    /* 행 전체를 클릭 영역으로 써서 어디를 눌러도(이름 쪽/제목 쪽 상관없이)
+       바로 해당 디자이너의 상세 페이지로 이동함 — 더 이상 선이 그려지길
+       기다릴 필요가 없으므로 지연 없이 즉시 이동함 */
+    row.addEventListener('click', () => {
+      if (mNavigating) return;
+      mNavigating = true;
+      openMobilePerson(pi);
+    });
     list.appendChild(row);
-    tempRows.push(row);
-  }
-
-  /* 2단계: 실측 — #mList 경계 안에 완전히 들어오는 행만 "가시 행"으로 인정.
-     혹시 측정이 실패해 0개가 나오면(레이아웃이 아직 완전히 자리잡기 전 등)
-     기존 근사식(estimateVisibleRows)으로 안전하게 폴백 */
-  const visibleIdx = computeVisibleMobileRowIndices(tempRows);
-  const N = Math.max(1, visibleIdx.length || estimateVisibleRows());
-  mLastVisibleRowCount = N;
-
-  const nameOrder = shuffle(DATA.map((_, i) => i)); /* 각 행에 어떤 디자이너의 이름이 보일지는 자유롭게 셔플 */
-
-  /* [버그 수정] 화면 가시 영역 내 한정 매칭: 기존 farBiasedPermutation(범위 제한
-     없음, 27행 전체 아무 데나 매칭)은 화면이 짧은 기기에서 스크롤 없이 보이는
-     행 수(N)보다 훨씬 먼 행끼리 짝을 지어, 연결선이 화면 위/아래로 뻗어나가
-     이탈하는 문제가 있었음. chunkedFarBiasedPermutation(N)으로 교체해 27명을
-     "화면에 스크롤 없이 보이는 크기(N, 실측값)"의 블록으로 잘라 블록 내부에서만
-     매칭되게 함 — 어느 화면(스크롤 위치)을 보고 있든, 그 화면에 실제로 나열된
-     행끼리만 짝이 되는 게 항상 보장되면서, 블록 안에서는 여전히 위/아래로
-     과감하게 교차하는 대각선 크로스 라인의 느낌이 그대로 살아있음 */
-  const namePositions = chunkedFarBiasedPermutation(DATA.length, N); /* namePositions[s] = s행의 제목이 속한 이름-행 인덱스(r) */
-  const titleOrder = namePositions.map(r => nameOrder[r]);
-
-  mNameOrder  = nameOrder;
-  mTitleOrder = titleOrder;
-
-  /* 리스트 내용을 다시 배정하면 혹시 그 순간에 걸려 있던 연결선/연결 상태가
-     끊긴 옛 참조를 가리킬 수 있으므로 먼저 깨끗이 정리함 */
-  const oldSvg = document.getElementById('connecting-line-svg');
-  if (oldSvg) oldSvg.innerHTML = '';
-  mLastLineNameEl = null;
-  mLastLineTitleEl = null;
-  mConnecting = false;
-
-  /* 3단계: 1단계에서 만든 같은 DOM 행(tempRows)에 최종 이름/제목 배정을
-     덮어씀 — 요소를 새로 만들지 않고 재사용하므로 방금 측정한 레이아웃이
-     그대로 유효함 */
-  for (let r = 0; r < DATA.length; r++) {
-    const namePi  = mNameOrder[r];
-    const titlePi = mTitleOrder[r];
-    tempRows[r].innerHTML =
-      `<span class="m-row-name" data-pi="${namePi}">${DATA[namePi].name}</span>` +
-      `<span class="m-row-title" data-pi="${titlePi}">${DATA[titlePi].koTitle || ''}</span>`;
-  }
-
-  /* .m-row-name/.m-row-title는 grid item 기본값(justify-self:stretch)으로
-     이미 자기 칸(트랙) 전체 너비를 차지하므로, 텍스트 글자 위가 아니라 이름/
-     제목의 전체 텍스트 영역(칸 전체) 어디를 눌러도 클릭이 정상 동작함 */
-  list.querySelectorAll('.m-row-name').forEach(el => {
-    el.addEventListener('click', () => connectMobilePair(Number(el.dataset.pi), el, 'name'));
-  });
-  list.querySelectorAll('.m-row-title').forEach(el => {
-    el.addEventListener('click', () => connectMobilePair(Number(el.dataset.pi), el, 'title'));
   });
 }
 
-/* 이름(또는 제목)을 클릭 → 같은 사람(pi)의 진짜 짝을 다른 칸에서 찾아 그 사이에
-   SVG 선을 긋고, 두 줄 모두 살짝 강조했다가 잠시 후 상세 페이지로 이동 */
-function connectMobilePair(pi, sourceEl, kind) {
-  if (mConnecting) return;
-  const list = document.getElementById('mList');
-  const targetSelector = kind === 'name'
-    ? `.m-row-title[data-pi="${pi}"]`
-    : `.m-row-name[data-pi="${pi}"]`;
-  const targetEl = list.querySelector(targetSelector);
-  if (!targetEl) { openMobilePerson(pi); return; } /* 안전장치: 짝을 못 찾으면 그냥 바로 이동 */
-
-  /* 선의 시작/끝 좌표는 "누가 이름이고 누가 제목인지"에 따라 달라지므로
-     (이름→오른쪽 끝, 제목→왼쪽 끝), 클릭한 쪽이 아니라 역할 기준으로 정리 */
-  const nameEl  = kind === 'name' ? sourceEl : targetEl;
-  const titleEl = kind === 'name' ? targetEl : sourceEl;
-
-  mConnecting = true;
-  sourceEl.closest('.m-row').classList.add('connecting');
-  targetEl.closest('.m-row').classList.add('connecting');
-  drawMobileConnectLine(nameEl, titleEl);
-  setTimeout(() => openMobilePerson(pi), MOBILE_CONNECT_MS);
-}
-
-/* .m-row-name/.m-row-title는 grid item 기본값(justify-self:stretch)으로
-   자기 칸(트랙) 전체 너비를 차지하는 박스임 — 클릭 판정 영역을 넓히기 위해
-   일부러 이렇게 둔 것. 그래서 el.getBoundingClientRect()는 "글자가 실제로
-   그려진 위치"가 아니라 "칸 전체(빈 여백 포함)의 경계"를 돌려줘서, 이름이나
-   제목이 짧을 때 선의 시작/끝점이 실제 글자에서 멀리 떨어진 빈 공간에 찍히는
-   위치 오차가 있었음. Range API로 그 안의 "텍스트 노드가 실제로 렌더링된
-   영역"만 정확히 측정해서 이 오차를 없앰 */
-function getTextRect(el) {
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  return range.getBoundingClientRect();
-}
-
-/* [크로스 브라우징] 화면 회전/주소창 접힘-펼침 중에도 선이 텍스트에서
-   떨어져 보이지 않도록, 현재 그려진 선의 두 대상(nameEl/titleEl)을 기억해뒀다가
-   resize/orientationchange/ResizeObserver가 발생할 때마다 즉시 다시 그림.
-   좌표 자체는 매번 getBoundingClientRect()로 새로 재는 값이라(캐시된 좌표를
-   재사용하지 않음) 컨테이너가 어떻게 리플로우되든 항상 그 순간의 실제 위치를
-   반영함 — "리스트 부모 컨테이너 기준 상대좌표"가 요구된 근본 이유(재계산
-   시점의 정확성)를 SVG를 뷰포트 고정으로 유지한 채로도 동일하게 달성함 */
-let mLastLineNameEl = null;
-let mLastLineTitleEl = null;
-
-/* 뷰포트 전체에 고정된 #connecting-line-svg 위에 "이름 텍스트의 실제 우측
-   끝(+4px)" ↔ "제목 텍스트의 실제 좌측 끝(-4px)"을 잇는 선을 그림 — 글자
-   몸통을 침범하지 않고 글자 사이의 빈 공간만 깔끔하게 잇도록. #connecting-line-svg가
-   position:fixed라 getBoundingClientRect()가 이미 이 SVG와 같은 좌표계(뷰포트
-   기준)이므로 컨테이너 오프셋을 따로 빼는 계산이 필요 없음 */
-function drawMobileConnectLine(nameEl, titleEl, skipAnim) {
-  const svg = document.getElementById('connecting-line-svg');
-  if (!svg) return;
-  mLastLineNameEl = nameEl;
-  mLastLineTitleEl = titleEl;
-  svg.innerHTML = '';
-  svg.style.display = ''; /* 혹시 이전에 강제로 꺼져 있었더라도(person-open 잔여 상태 등) 새로 그릴 땐 항상 보이게 */
-  const nameRect  = getTextRect(nameEl);
-  const titleRect = getTextRect(titleEl);
-  const x1 = nameRect.right + MOBILE_LINE_START_GAP;   /* 이름 텍스트 실제 우측 끝 + 4px */
-  const y1 = nameRect.top   + nameRect.height  / 2;
-  const x2 = titleRect.left - MOBILE_LINE_END_GAP;     /* 제목 텍스트 실제 좌측 끝 - 6px —
-                                                            문장 길이와 무관하게 항상 실제 렌더링된
-                                                            글자 좌측 끝(Range API 측정) 기준이라
-                                                            "스케이트보드는 스캐너이다"처럼 긴 문장이
-                                                            와도 그 실제 시작 지점에서 6px 앞에 멈춤 */
-  const y2 = titleRect.top  + titleRect.height / 2;
-
-  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  line.setAttribute('x1', x1);
-  line.setAttribute('y1', y1);
-  line.setAttribute('x2', x2);
-  line.setAttribute('y2', y2);
-  const len = Math.max(1, Math.hypot(x2 - x1, y2 - y1));
-  if (skipAnim) {
-    /* [크로스 브라우징] 리사이즈/회전 도중 재계산할 때는 처음부터 다시
-       그려지는(stroke-dashoffset 애니메이션이 재생) 대신 이미 완성된
-       모습으로 즉시 갱신되게 함 — 화면이 회전하는 그 짧은 순간에 선이
-       다시 그려지는 듯한 부자연스러운 깜빡임을 피함 */
-    line.style.strokeDasharray = 'none';
-  } else {
-    line.style.strokeDasharray  = len;
-    line.style.strokeDashoffset = len;
-  }
-  svg.appendChild(line);
-  if (skipAnim) return;
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    line.style.transition = 'stroke-dashoffset 0.25s cubic-bezier(0.25, 1, 0.5, 1)';
-    line.style.strokeDashoffset = '0';
-  }));
-}
 
 /* ABOUT 탭: 데스크톱 소개글(.info-desc-ko/en) + 메타 정보(지도교수/참여자/코퍼라이트) */
 /* 데스크톱 원본(.info-desc-ko/.info-desc-en)은 문단 2개가 <br> 하나로만
@@ -1584,17 +1326,51 @@ function buildMobileAbout() {
   }
 }
 
+/* [히어로 뷰 스펙 정정] 서문(.about-statement-wrapper)과 지도교수/참여자
+   명단(#mMeta)은 스크롤 없이 첫 화면에 전부 보여야 하고, 카피라이트 영문
+   푸터(#mAboutFooter)만 반드시 스크롤을 내려야 보이게 해야 함 — 이전엔
+   서문 박스 자체를 뷰포트 높이만큼 부풀려서 크레딧까지 통째로 밀어냈었는데,
+   그게 아니라 "크레딧 바로 다음, 푸터 바로 앞"에만 여백을 둬야 함. 화면
+   높이가 기기마다 달라(특히 아이패드처럼 큰 기기) 크레딧이 끝나는 지점부터
+   화면 하단까지 남는 여백이 매번 다르므로, 고정 px 여백만으로는 큰 화면에서
+   푸터가 그대로 첫 화면에 노출됨 — 그래서 그 남은 거리를 실측해서 최소
+   여백(90px)에 더해 정확히 화면 밖으로 밀려나는 지점까지 margin-top을
+   동적으로 계산함(#mHeader/#mTabs 좌표를 실측하던 기존 updateMobileGradientMetrics
+   패턴과 동일한 방식) */
+const ABOUT_FOOTER_MIN_GAP = 90; /* 요청하신 80~100px 사이 값 — 크레딧-푸터 사이 최소 간격 */
+
+function updateAboutFooterPush() {
+  if (!document.body.classList.contains('mobile-mode')) return;
+  const aboutView = document.getElementById('mAboutView');
+  const meta = document.getElementById('mMeta');
+  const footerInner = document.querySelector('.about-copyright-footer');
+  if (!aboutView || aboutView.hidden || !meta || !footerInner) return;
+  footerInner.style.marginTop = '0px'; /* 이전 계산값이 남아있으면 측정이 누적 오차를 일으키므로 항상 리셋 후 다시 잼 */
+  const metaBottom = meta.getBoundingClientRect().bottom; /* 크레딧 하단의 현재 뷰포트 기준 y좌표 */
+  const viewportH = window.innerHeight;
+  const gapToViewportBottom = viewportH - metaBottom; /* 크레딧 하단부터 화면 맨 밑까지 남은 거리(화면이 넉넉한 태블릿일수록 큼, 이미 화면을 넘겼으면 음수) */
+  const push = Math.max(ABOUT_FOOTER_MIN_GAP, gapToViewportBottom + ABOUT_FOOTER_MIN_GAP);
+  footerInner.style.marginTop = push + 'px';
+}
+
 /* POSTERS 탭: 데스크톱 버전(#posterDetailGrid)과 동일한 27개 포스터를
    2열 그리드로 렌더링. 데스크톱의 renderPosterDetailGrid()처럼 열 때마다
    다시 셔플해서 그림. 캡션은 호버가 없는 모바일 특성상 이미지 아래에
-   "이름 | English name" 형식으로 항상 노출함 */
+   "이름 | English name" 형식으로 항상 노출함.
+   [기능 추가] 포스터 이미지/이름 클릭 시 해당 인물의 개인 상세 페이지로
+   바로 이동 — 랜딩 리스트(.m-row)가 openMobilePerson(idx)를 호출하는 것과
+   완전히 동일한 방식. shuffle()은 얕은 복사본을 섞을 뿐 DATA 원본 순서는
+   바꾸지 않으므로(각 person은 DATA와 같은 객체 참조), DATA.indexOf(person)로
+   원래 인덱스를 정확히 되찾을 수 있음 */
 function renderMobilePosterGrid() {
   const grid = document.getElementById('mPosterGrid');
   if (!grid) return;
   grid.innerHTML = '';
   shuffle(DATA).forEach(person => {
+    const idx = DATA.indexOf(person);
     const item = document.createElement('div');
     item.className = 'm-poster-item';
+    item.dataset.pi = idx;
 
     if (person.poster) {
       const img = document.createElement('img');
@@ -1607,6 +1383,18 @@ function renderMobilePosterGrid() {
     caption.className = 'm-poster-caption';
     caption.innerHTML = `${person.name} <span class="en">| ${person.en}</span>`;
     item.appendChild(caption);
+
+    /* [기능 추가] 카드 전체(이미지+캡션) 어디를 클릭해도 상세 페이지로
+       이동 — 랜딩 리스트 행 클릭과 동일하게 mNavigating으로 중복 클릭만
+       방지함. openMobilePerson은 person-open 클래스만 추가하고 기존
+       posters-open 클래스는 그대로 두므로, 상세 페이지에서 닫기(✕)를 누르면
+       closeMobilePerson()이 person-open만 제거해 자동으로 POSTERS 그리드로
+       돌아옴(추가 상태 관리 불필요 — 기존 구조가 이미 그렇게 동작함) */
+    item.addEventListener('click', () => {
+      if (mNavigating) return;
+      mNavigating = true;
+      openMobilePerson(idx);
+    });
 
     grid.appendChild(item);
   });
@@ -1632,6 +1420,7 @@ function switchMobileTab(tab) {
   closeMobilePerson();
   document.body.scrollTop = 0; /* 탭 전환은 항상 새 탭 맨 위에서 시작 (closeMobilePerson의 스크롤 복원을 덮어씀) */
   scheduleMobileGradientMetricsUpdate(); /* 탭마다 콘텐츠 높이가 다르므로 --page-h/각 요소 위치를 다시 잼 */
+  updateBodyScrollFade(); /* 방금 scrollTop=0으로 되돌렸으니 헤더 페이드도 즉시 꺼진 상태로 동기화 */
 }
 
 /* 기본(랜딩) 리스트로 되돌아감: ABOUT/POSTERS 어느 쪽도 활성/밑줄 표시되지
@@ -1644,6 +1433,7 @@ function showLandingList() {
   document.getElementById('mobilePage').classList.remove('about-open', 'posters-open');
   document.body.scrollTop = 0;
   scheduleMobileGradientMetricsUpdate();
+  updateBodyScrollFade();
 }
 
 function initMobile() {
@@ -1685,18 +1475,30 @@ function initMobile() {
      #mobilePage 자체는 움직이지 않아 --el-x/--el-y가 갱신되지 않으면
      그라데이션이 스크롤된 행과 어긋나 보일 수 있음. 리스트 스크롤 시
      rAF로 스로틀링하여 좌표를 다시 잼 */
-  const mListEl = document.getElementById('mList');
-  if (mListEl) {
-    let mListScrollTicking = false;
-    mListEl.addEventListener('scroll', () => {
-      if (mListScrollTicking) return;
-      mListScrollTicking = true;
-      requestAnimationFrame(() => {
-        updateMobileGradientMetrics();
-        mListScrollTicking = false;
-      });
-    }, { passive: true });
-  }
+  /* [동적 스크롤 페이드] body 스크롤(ABOUT/POSTERS/개인상세 공통)에도 동일하게
+     rAF 스로틀링 리스너를 붙여 헤더 하단 페이드 오버레이를 스크롤 위치에 따라
+     켜고 끔 */
+  let mBodyScrollTicking = false;
+  document.body.addEventListener('scroll', () => {
+    if (mBodyScrollTicking) return;
+    mBodyScrollTicking = true;
+    requestAnimationFrame(() => {
+      updateBodyScrollFade();
+      mBodyScrollTicking = false;
+    });
+  }, { passive: true });
+  updateBodyScrollFade();
+}
+
+/* [동적 스크롤 페이드] 헤더(#mHeader) 바로 아래 오버레이(.m-header-fade)는
+   ABOUT/POSTERS/개인상세처럼 body 자체가 스크롤되는 화면에서 콘텐츠가 헤더
+   밑으로 사라지는 지점을 부드럽게 해주는 용도라, 맨 위(스크롤 전)일 때는
+   가려질 콘텐츠가 없으므로 꺼서 텍스트가 100% 선명하게 보이게 함. 하단은
+   기존 #mTabs의 .is-bottom(IntersectionObserver, initMobileTabFade)이 이미
+   동일한 역할을 하고 있어 여기서 새로 만들 필요가 없음 */
+function updateBodyScrollFade() {
+  const isTop = document.body.scrollTop <= 5;
+  document.body.classList.toggle('is-scroll-top', isTop);
 }
 
 /* 하단 고정 탭의 그라데이션 배경은 리스트/소개글 위를 지나갈 땐 텍스트가
@@ -1765,30 +1567,13 @@ function openMobilePerson(idx) {
   showPersonHeader(idx);
   document.getElementById('mobilePage').classList.add('person-open');
   document.body.scrollTop = 0; /* body가 실제 스크롤 컨테이너 — 상세 페이지는 항상 맨 위에서 시작 */
-  /* 선은 다 그어진 뒤 이 시점에 호출되므로, 상세 페이지로 넘어가면 즉시 완전히
-     지움 — innerHTML을 비우는 것과 별개로 display:none까지 명시해서(CSS의
-     #mobilePage.person-open ~ #connecting-line-svg 규칙과 이중으로), 혹시라도
-     선이 다 안 지워진 채로 남는 경우가 있더라도 절대 랜딩 화면 위로 비쳐 보이지
-     않도록 함 */
-  const svg = document.getElementById('connecting-line-svg');
-  if (svg) {
-    svg.innerHTML = '';
-    svg.style.display = 'none';
-  }
-  document.querySelectorAll('.m-row.connecting').forEach(el => el.classList.remove('connecting'));
   scheduleMobileGradientMetricsUpdate(); /* 상세 페이지 콘텐츠(설명문/갤러리)로 --page-h/좌표 다시 계산 */
 }
 
 function closeMobilePerson() {
   document.getElementById('mobilePage').classList.remove('person-open');
   restoreLandingHeader();
-  document.querySelectorAll('.m-row.connecting').forEach(el => el.classList.remove('connecting'));
-  const svg = document.getElementById('connecting-line-svg');
-  if (svg) {
-    svg.innerHTML = '';
-    svg.style.display = ''; /* person-open일 때 강제로 꺼둔 display:none을 해제 — CSS(body.mobile-mode #connecting-line-svg)가 다시 block으로 보여줌 */
-  }
-  mConnecting = false;
+  mNavigating = false; /* 목록으로 돌아왔으니 다음 클릭을 다시 받을 수 있게 해제 */
   document.body.scrollTop = mSavedScrollTop; /* 원래 목록 스크롤 위치로 복원 */
   scheduleMobileGradientMetricsUpdate(); /* 랜딩 리스트로 돌아왔으니 다시 랜딩 기준으로 재계산 */
 }
@@ -1818,44 +1603,17 @@ function resetDesktopPageStyle() {
   page.style.removeProperty('--shimmer-x');
 }
 
-/* [크로스 브라우징] 화면 회전/주소창 접힘-펼침으로 리플로우가 일어나는
-   바로 그 순간, 현재 연결선이 떠 있는 상태(mConnecting)라면 두 대상의
-   새 위치로 즉시 다시 그림 — 이게 없으면 선이 리사이즈 이전의 옛 좌표에
-   그대로 멈춰있어 화면이 재배치된 뒤에는 엉뚱한 곳을 가리키는 것처럼
-   보이는 버그가 생김 */
-function redrawMobileConnectLineIfActive() {
-  if (!mConnecting || !mLastLineNameEl || !mLastLineTitleEl) return;
-  if (!document.body.contains(mLastLineNameEl) || !document.body.contains(mLastLineTitleEl)) return;
-  drawMobileConnectLine(mLastLineNameEl, mLastLineTitleEl, true);
-}
-
-/* [버그 수정] 화면 가시 영역 내 한정 매칭 유지: 주소창 접힘/펼침이나 화면
-   회전으로 실제 가시 행 수(N)가 바뀌면, 지금 짝지어진 A-B 매칭이 더 이상
-   "같은 화면 안"이라는 보장을 만족하지 못할 수 있음(예: 세로로 돌려서 N이
-   커졌다가 다시 가로로 돌리면 N이 작아짐). N이 바뀌었을 때만(불필요한 리빌드
-   방지) 리스트를 다시 섞어 항상 현재 화면 기준으로 유효하게 유지함. 단,
-   지금 막 연결선 애니메이션이 진행 중이면(mConnecting) 사용자가 보고 있는
-   화면을 그 자리에서 갈아엎지 않도록 이번 리사이즈에서는 건너뜀(대신
-   redrawMobileConnectLineIfActive가 기존 짝의 새 좌표로 선을 다시 그림) */
-function maybeRebuildMobileListForVisibleRows() {
-  if (!document.body.classList.contains('mobile-mode')) return;
-  if (mConnecting) return;
-  updateMobileListMaxHeight();
-  const rows = Array.from(document.querySelectorAll('#mList .m-row'));
-  const visibleIdx = computeVisibleMobileRowIndices(rows);
-  const newN = Math.max(1, visibleIdx.length || estimateVisibleRows());
-  if (newN !== mLastVisibleRowCount) {
-    buildMobileList();
-  }
-}
-
 /* ── 리사이즈 ── */
 function onResize() {
   applyResponsiveMode();
   if (isMobileViewport()) {
-    maybeRebuildMobileListForVisibleRows(); /* 가시 행 수(N)가 바뀌었으면 그 범위 안에서만 다시 매칭 */
+    /* [버그 수정] 예전엔 리사이즈/회전 때마다 가시 행 수(N)가 바뀌었는지 보고
+       필요하면 리스트를 다시 섞었음(A-B가 화면 밖으로 벗어나지 않게 하려고).
+       이제는 각 행이 이미 같은 사람의 이름+작품명을 함께 보여주므로 그 문제
+       자체가 없어져 리스트를 다시 섞을 이유가 없음 — 배경 그라데이션 좌표만
+       다시 계산하면 됨 */
     scheduleMobileGradientMetricsUpdate(); /* 모바일 모드일 땐 #page가 숨겨져 있으니 데스크톱 좌표 계산은 건너뛰고, 대신 모바일 그라데이션 좌표를 다시 잼 */
-    redrawMobileConnectLineIfActive();
+    updateBodyScrollFade();
     return;
   }
   layout();
@@ -1957,25 +1715,10 @@ function updateMobileGradientMetrics() {
   });
 }
 
-/* #mList(랜딩 27행 리스트)는 화면 높이가 짧은 기기에서 자체 스크롤(overflow-y:
-   auto)되어야 하는데, 그 상한 높이는 실제로는 "뷰포트 - 헤더 - 탭바" 값이며
-   헤더/탭바 높이 둘 다 cqw(컨테이너 폭) 비례라 기기마다 달라짐. 고정 px 값
-   (예: calc(100vh - 180px))으로는 기기별 오차가 생겨 마지막 행이 탭바에
-   가려지는 문제가 있었음 — 그래서 헤더 하단 실제 좌표와 탭바 상단 실제 좌표를
-   매번 직접 측정해서 정확한 여유 높이를 --m-list-max-h로 넘겨줌(측정 실패 시
-   CSS의 calc(100vh - 180px) 폴백 사용) */
-function updateMobileListMaxHeight() {
-  if (!document.body.classList.contains('mobile-mode')) return;
-  const mList = document.getElementById('mList');
-  const tabs = document.getElementById('mTabs');
-  if (!mList || !tabs) return;
-  const listTop = mList.getBoundingClientRect().top;
-  const tabsTop = tabs.getBoundingClientRect().top;
-  const available = tabsTop - listTop;
-  if (available > 0) {
-    mList.style.setProperty('--m-list-max-h', available + 'px');
-  }
-}
+/* [버그 수정 - 가시 행 제한 로직 완전 삭제] #mList가 더 이상 자체 max-height/
+   overflow-y:auto를 갖지 않으므로(body 스크롤 하나로 통일), 헤더/탭바 사이
+   여유 높이를 매번 측정해서 --m-list-max-h를 넣어주던 updateMobileListMaxHeight()
+   함수 자체가 필요 없어져 완전히 삭제함 */
 
 /* 뷰 전환/리사이즈 직후엔 아직 브라우저가 새 레이아웃을 확정하기 전이라
    getBoundingClientRect()가 이전 값을 돌려줄 수 있음 — 더블 rAF로 한 프레임
@@ -1984,7 +1727,7 @@ function updateMobileListMaxHeight() {
 function scheduleMobileGradientMetricsUpdate() {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     updateMobileGradientMetrics();
-    updateMobileListMaxHeight();
+    updateAboutFooterPush();
   }));
 }
 
@@ -2024,13 +1767,11 @@ window.addEventListener('orientationchange', onResize);
    이벤트를 안정적으로 쏘지 않는 경우가 있어(visualViewport만 변함) —
    #mobilePage 자체의 실제 렌더링 크기를 감시하는 ResizeObserver를 별도로
    둬서, resize 이벤트 유무와 무관하게 실제 레이아웃이 바뀔 때마다 모바일
-   그라데이션 좌표와(연결선이 떠 있다면) 연결선을 다시 계산함 */
+   그라데이션 좌표를 다시 계산함(연결선 재계산은 더 이상 필요 없어 제거) */
 if (typeof ResizeObserver !== 'undefined') {
   const mobilePageResizeObserver = new ResizeObserver(() => {
     if (!document.body.classList.contains('mobile-mode')) return;
-    maybeRebuildMobileListForVisibleRows();
     scheduleMobileGradientMetricsUpdate();
-    redrawMobileConnectLineIfActive();
   });
   const mobilePageEl = document.getElementById('mobilePage');
   if (mobilePageEl) mobilePageResizeObserver.observe(mobilePageEl);
