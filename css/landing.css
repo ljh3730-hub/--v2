@@ -1526,12 +1526,14 @@ body.mobile-mode.is-scroll-top .m-header-fade {
      길게 나오는 불일치가 있었음. 여백은 아래 #mAboutFooter(선이 없는 바깥
      래퍼)로 옮기고, 이 박스 자체는 텍스트 높이만큼만 갖도록 되돌림 */
 }
-/* #mAboutFooter: 세로선이 없는 바깥 래퍼 — #mFooter와 완전히 동일한 방식으로
-   여기서만 하단 탭바 clearance(112px)를 담당해서, 안쪽 .about-copyright-footer
-   (세로선을 가진 박스)의 실제 높이가 다른 페이지 공용 푸터와 정확히 같아짐 */
-#mAboutFooter {
-  padding-bottom: 112px;
-}
+/* [버그 수정: 스크롤 최하단 위치 불일치] #mAboutFooter는 #mFooter와 달리
+   #mScroll "안쪽"에 있는 요소임(#mFooter는 #mScroll이 끝난 뒤 형제로 별도
+   배치됨) — #mScroll 자신이 이미 하단 탭바 clearance용 padding-bottom:130px를
+   갖고 있어서(POSTERS 그리드도 같은 방식으로 이 여백 하나만 공유), 여기서
+   112px를 추가로 더 주면 130px+112px=242px가 이중으로 겹쳐 ABOUT만 스크롤을
+   다 내려도 다른 페이지보다 훨씬 많은 빈 공간이 남는 문제가 있었음. #mScroll의
+   기존 130px 여백 하나로 충분하므로 여기서는 별도 padding을 주지 않음(POSTERS
+   뷰와 동일한 방식으로 통일) */
 /* 하단 카피라이트 푸터 전역 공통 스타일 — 랜딩/POSTERS/개인상세(#mFooter)와
    ABOUT(.about-copyright-footer) 전부 이 클래스 하나로 통일함. 뷰가 바뀌어도
    폰트/줄간격/자간/세로선 위치가 절대 달라지지 않도록 모든 값을 피그마
