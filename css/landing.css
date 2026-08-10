@@ -1864,32 +1864,29 @@ body.mobile-mode #mFooter {
    보이게 함. 배경(흰색)에 흰색-알파 그라데이션을 얹는 것뿐이라 블렌드 모드 없이
    (데스크톱과 동일 이유: normal 합성이 이미 결과적으로 동일하고 사파리 블렌드
    버그를 피함) 검정 텍스트가 하이라이트 지점에서만 자연스럽게 밝아짐 */
-/* [버그 수정: ABOUT 화이트아웃 재발] ABOUT 뷰(.about-p-ko/.about-p-en/
-   .m-meta-univ-block/.m-meta-row/.m-participant-name/.about-statement-wrapper/
-   .about-credits-wrapper)를 이 공유 스포트라이트 버킷에서 완전히 제외함.
-   원인: 반지름(--spot-radius)이 "현재 보이는 뷰의 실제 콘텐츠 높이 × 2.95"로
-   계산되는데(updateMobileGradientMetrics), 서문 박스의 651px 강제 최소높이를
-   빼면서 ABOUT 뷰 전체 높이가 크게 짧아졌고, 그 결과 반지름 대비 뷰 전체가
-   항상 밝기 정점(0~40%) 구간 안에 들어와 문단/학과정보/지도교수 줄 전체가
-   흰색에 가깝게 씻겨나가 "글자가 통째로 사라진 것처럼" 보이는 문제가 실기기
-   (Chrome 기기 시뮬레이터로 재현 확인됨: --spot-radius가 실제 페이지 높이의
-   3~4배로 계산되어 있었음)에서 재현됨. 27행 리스트 같은 긴 뷰는 상대적으로
-   이 문제에서 자유롭지만, 텍스트 밀도가 높고 가독성이 최우선인 ABOUT 문단은
-   반지름 계산식을 건드리는 대신 아예 이 장식 효과 대상에서 빼는 쪽이 안전함
-   (참여자 그리드도 같은 --page-h를 공유하므로 함께 제외) */
+/* [화이트아웃 재발 방지 + ABOUT 서문 그라데이션 복귀] ABOUT 문단이 반짝임
+   효과에서 빠져있던 이유는 서문 박스의 651px 강제 높이를 제거하면서 뷰
+   전체 높이가 짧아져 반지름(페이지 높이×2.95) 대비 화면 전체가 밝기
+   정점 구간에 들어와 있었기 때문이었음 — 지금은 서문 박스가 다시
+   min-height: calc(100dvh - 100px) 히어로 스펙으로 복귀해서 ABOUT 뷰 전체
+   높이가 다른 긴 뷰들과 비슷한 수준으로 회복됐으므로, 안전하게 다시
+   포함시킴(아이패드처럼 뷰포트가 큰 기기에서도 히어로가 뷰포트 높이에
+   비례해 같이 커지므로 반지름/높이 비율은 항상 동일하게 유지됨) */
 body.mobile-mode :is(
   .m-row-name, .m-row-title, .m-title-ko, .m-title-en, .m-header-right,
-  .common-footer, .detail-desc-ko, .detail-desc-en,
+  .about-p-ko, .about-p-en, .m-meta-univ-block, .m-meta-row,
+  .m-participant-name, .common-footer, .detail-desc-ko, .detail-desc-en,
   .m-person-video, .m-poster-caption, .m-hr, .m-tab, .m-tab-close,
-  .detail-description-wrapper
+  .about-statement-wrapper, .about-credits-wrapper, .detail-description-wrapper
 ) {
   position: relative;
 }
 body.mobile-mode :is(
   .m-row-name, .m-row-title, .m-title-ko, .m-title-en, .m-header-right,
-  .common-footer, .detail-desc-ko, .detail-desc-en,
+  .about-p-ko, .about-p-en, .m-meta-univ-block, .m-meta-row,
+  .m-participant-name, .common-footer, .detail-desc-ko, .detail-desc-en,
   .m-person-video, .m-poster-caption, .m-hr, .m-tab, .m-tab-close,
-  .detail-description-wrapper
+  .about-statement-wrapper, .about-credits-wrapper, .detail-description-wrapper
 )::before {
   content: '';
   position: absolute;
@@ -1924,6 +1921,8 @@ body.mobile-mode :is(
    검정으로 남아있었음. left를 1px 더 왼쪽으로 밀어서 border-left 픽셀까지
    오버레이가 덮도록 함(다른 요소는 border가 없으므로 영향 없음) */
 body.mobile-mode .common-footer::before,
+body.mobile-mode .about-statement-wrapper::before,
+body.mobile-mode .about-credits-wrapper::before,
 body.mobile-mode .detail-description-wrapper::before {
   /* [그라데이션 연동] 이 넷은 모두 자기 자신의 border-left로 세로선을 그리는데,
      absolute ::before(inset:0)는 기본적으로 padding 박스 기준이라 border
