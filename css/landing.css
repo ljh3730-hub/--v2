@@ -1676,13 +1676,16 @@ body.mobile-mode #mTabs.is-bottom ~ #mTabsBg {
    여백이 있는 위치) — margin-left는 숫자값이라 transition으로 부드럽게
    좌우 이동함 */
 .m-tab[data-tab="about"] {
-  margin-left: 25.8706cqw; /* 104px / 402px */
+  margin-left: 104px; /* [고정 px] #mTabs가 항상 402px로 고정되므로,
+     #mobilePage(태블릿에서 폭 확장됨) 기준 cqw를 쓰면 아이콘/버튼 간격이
+     태블릿에서 실측값보다 훨씬 커지는 버그가 있었음 — px로 고정해 폭과
+     무관하게 항상 동일한 402px 프레임 기준 위치를 유지함 */
   transition: margin-left 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 #mobilePage.person-open .m-tab[data-tab="about"],
 #mobilePage.about-open .m-tab[data-tab="about"],
 #mobilePage.posters-open .m-tab[data-tab="about"] {
-  margin-left: 8.209cqw; /* 33px / 402px */
+  margin-left: 33px; /* [고정 px] 위와 동일한 이유 */
 }
 /* POSTERS: ABOUT 바로 뒤에 이어지는 flex 아이템이라, POSTERS 자신의
    margin-left가 곧 "ABOUT 우측 끝에서부터의 여백"이 됨 — 이 여백을
@@ -1691,13 +1694,13 @@ body.mobile-mode #mTabs.is-bottom ~ #mTabsBg {
    랜딩  = 210 − 104 − 51.61 = 54.39px
    Active = 169 − 33 − 51.61 = 84.39px */
 .m-tab[data-tab="posters"] {
-  margin-left: 13.53cqw; /* 54.39px / 402px */
+  margin-left: 54.39px; /* [고정 px] 위와 동일한 이유 */
   transition: margin-left 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 #mobilePage.person-open .m-tab[data-tab="posters"],
 #mobilePage.about-open .m-tab[data-tab="posters"],
 #mobilePage.posters-open .m-tab[data-tab="posters"] {
-  margin-left: 20.9927cqw; /* 84.39px / 402px */
+  margin-left: 84.39px; /* [고정 px] 위와 동일한 이유 */
 }
 /* 현재 탭(활성 상태)만 밑줄로 구분 — 굵기는 둘 다 항상 동일(볼드) */
 .m-tab.active {
@@ -1729,15 +1732,15 @@ body.mobile-mode #mTabs.is-bottom ~ #mTabsBg {
 .m-tab-close svg {
   flex-shrink: 0;
   display: block;
-  width: 3.505cqw; /* 14.09px / 402px — 피그마 ✕ 아이콘 실측 크기(45도 회전
-                       크로스 벡터, stroke-linecap:round 포함 바운딩박스) */
-  height: 3.505cqw;
+  width: 14px; /* [고정 px] 피그마 ✕ 아이콘 실측 크기 — #mobilePage 기준 cqw로
+                  두면 태블릿에서 아이콘이 크게 부풀어 보이는 버그가 있었음 */
+  height: 14px;
 }
 #mobilePage.person-open .m-tab-close,
 #mobilePage.about-open .m-tab-close,
 #mobilePage.posters-open .m-tab-close {
-  width: 3.505cqw;
-  margin-left: 22.7262cqw; /* 91.36px / 402px */
+  width: 14px; /* [고정 px] 위와 동일한 이유 */
+  margin-left: 91.36px; /* [고정 px] 위와 동일한 이유 */
   opacity: 1;
   pointer-events: auto;
 }
