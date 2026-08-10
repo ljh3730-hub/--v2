@@ -1361,18 +1361,19 @@ body.mobile-mode.is-scroll-top .m-header-fade {
                           값(단위까지 통일: rem이 아니라 cqw)으로 맞춰, 헤더
                           아래 본문 시작 Y축이 모든 페이지에서 완전히 일치하게 함 */
   margin-left: 3.4826cqw; /* 14px / 402px */
-  /* [버그 수정] 이 박스에 걸려있던 651px 고정 min-height(피그마 402px 프레임
-     기준 강제 높이)가, 실제 서문 텍스트 길이보다 훨씬 커서 서문과 바로 아래
-     지도교수/참여자 명단(.about-credits-wrapper) 사이에 거대한 빈 여백을
-     만들고 있었음 — 서문 박스가 내용과 무관하게 항상 651px 높이를 차지하며
-     다음 형제 요소를 그만큼 아래로 밀어냈기 때문. min-height 강제를 완전히
-     제거하고, 순수 margin-bottom(48px)만으로 서문↔명단 간격을 연결함(스크롤
-     시 카피라이트 푸터만 화면 밖으로 미는 로직은 여전히 아래 JS
-     updateAboutFooterPush가 별도로 담당) */
+  /* [히어로 스펙 재적용] 서문만 첫 화면(스크롤 전)에 보이고, 지도교수/참여자
+     명단 + 카피라이트 푸터는 전부 스크롤을 내려야 보이도록 다시 복귀함.
+     예전에 이 min-height(651px 고정값) 때문에 "서문과 명단 사이 거대한
+     빈 여백" 버그가 났었는데, 그건 반짝임 스포트라이트 효과가 짧아진 화면
+     높이 대비 반지름이 과도하게 커져서 글자가 하얗게 씻겨나간 것(화이트아웃)이
+     진짜 원인이었음 — 이제 ABOUT 텍스트 전체를 그 효과 대상에서 제외했으므로
+     (아래 :is(...) 버킷 참고) 화면 높이를 다시 키워도 화이트아웃이 재발하지
+     않음. 그래서 안전하게 뷰포트 높이 기반 히어로로 복귀 가능 */
+  min-height: calc(100dvh - 100px);
   border-left: 1px solid #000000;
   padding-top: 0;
   padding-left: 1.7413cqw; /* 7px / 402px */
-  margin-bottom: 11.9403cqw; /* 48px / 402px — 서문과 지도교수/참여자 명단 사이 간격 */
+  margin-bottom: 0;
 }
 /* 문단 4개(한글 2 + 영문 2)를 진짜 <p> 요소로 분리해서 nth-child로 문단별
    들여쓰기/여백을 각각 제어함:
@@ -1430,7 +1431,10 @@ body.mobile-mode.is-scroll-top .m-header-fade {
    padding-top:0이라 학과 정보 텍스트 맨 위 = 선 맨 위가 정확히 일치하고,
    margin-bottom:40px로 아래 카피라이트 푸터와 확실히 띄움 */
 .about-credits-wrapper {
-  margin-top: 1.5rem;
+  /* [히어로 스펙 재적용] 위 서문 박스가 이제 자체적으로 min-height로 스크롤을
+     강제하므로, 명단 쪽에 별도의 큰 margin-top을 둘 필요가 없음 — 헤더/랜딩
+     리스트와 동일한 기본 상단 간격(18px)만 유지 */
+  margin-top: 4.5cqw; /* 18px / 402px */
   margin-left: 46.2687cqw;
   margin-bottom: 0;
   border-left: 1px solid #000000;
@@ -1509,13 +1513,13 @@ body.mobile-mode.is-scroll-top .m-header-fade {
 /* 카피라이트 푸터: 참여자 명단 끝~푸터 사이 여백만 이 블록 고유값(24px) —
    폰트/세로선/여백 등 나머지는 전부 .common-footer(전역 공통 클래스)가 담당 */
 .about-copyright-footer {
-  margin-top: 19.9005cqw; /* 80px / 402px — 참여자 명단과 카피라이트 푸터 사이
-                              기본 간격(실제 위치는 JS updateAboutFooterPush가
-                              스크롤을 요구하도록 동적으로 더 밀어냄) */
-  /* [버그 수정] #mFooter(랜딩/POSTERS/개인상세 공용 푸터)는 이미 하단 고정
-     탭바(#mTabs)에 안 가리도록 padding-bottom을 갖고 있는데, ABOUT 전용
-     카피라이트 푸터에는 이 여백이 없어서 맨 끝까지 스크롤하면 탭바 뒤로
-     텍스트가 가려질 수 있었음 — 120px로 맞춰줌 */
+  /* [히어로 스펙 재적용] 명단과 푸터 사이는 이제 화면 밖으로 미는 용도가
+     아니라 순수 시각적 여백(24~32px)만 필요함 — 서문의 min-height가 이미
+     "명단+푸터 전체"를 스크롤 후 영역으로 밀어내는 역할을 담당하므로,
+     JS(updateAboutFooterPush)의 동적 계산은 더 이상 필요 없어 비활성화함 */
+  margin-top: 28px;
+  /* #mFooter(랜딩/POSTERS/개인상세 공용 푸터)와 동일하게, 하단 고정 탭바
+     (#mTabs)에 텍스트가 가리지 않도록 확보한 여백 */
   padding-bottom: 120px;
 }
 /* 하단 카피라이트 푸터 전역 공통 스타일 — 랜딩/POSTERS/개인상세(#mFooter)와

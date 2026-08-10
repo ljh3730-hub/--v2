@@ -1724,10 +1724,14 @@ function updateMobileGradientMetrics() {
    getBoundingClientRect()가 이전 값을 돌려줄 수 있음 — 더블 rAF로 한 프레임
    흘려보내 레이아웃이 완전히 정착된 다음에 측정함(이 코드베이스 다른 곳의
    동일한 패턴과 통일) */
+/* [히어로 스펙 재적용] updateAboutFooterPush()는 "크레딧 바로 다음에만
+   여백을 두고 푸터를 화면 밖으로 미는" 구 스펙 전용 계산이었는데, 이제
+   .about-statement-wrapper 자체의 min-height(calc(100dvh - 100px))가
+   크레딧+푸터 전체를 스크롤 후 영역으로 미는 역할을 대신하므로 더 이상
+   호출하지 않음(함수 정의 자체는 되돌릴 경우를 대비해 남겨둠) */
 function scheduleMobileGradientMetricsUpdate() {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     updateMobileGradientMetrics();
-    updateAboutFooterPush();
   }));
 }
 
