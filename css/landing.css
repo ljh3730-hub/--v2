@@ -1361,19 +1361,18 @@ body.mobile-mode.is-scroll-top .m-header-fade {
                           값(단위까지 통일: rem이 아니라 cqw)으로 맞춰, 헤더
                           아래 본문 시작 Y축이 모든 페이지에서 완전히 일치하게 함 */
   margin-left: 3.4826cqw; /* 14px / 402px */
-  /* [히어로 뷰 스펙 정정] 이전엔 이 박스에 "뷰포트 높이 - 140px" 최소값을
-     걸어서 서문 다음에 오는 지도교수/참여자 크레딧까지 전부 화면 밖으로
-     밀어냈었는데, 실제 의도는 그게 아니라 서문+크레딧은 첫 화면에 다 보이고
-     "카피라이트 푸터 한 줄만" 스크롤해야 보이는 것이었음 — 그래서 뷰포트
-     기반 강제 인플레이션은 제거하고, 피그마 402px 프레임 기준 651px 고정
-     최소값(161.9403cqw)만 남김(문단이 더 길면 자유롭게 늘어남). 푸터를
-     화면 밖으로 미는 로직은 아래 #mAboutFooter 쪽으로 옮김(JS,
-     updateAboutFooterPush) */
-  min-height: 161.9403cqw; /* 651px / 402px */
+  /* [버그 수정] 이 박스에 걸려있던 651px 고정 min-height(피그마 402px 프레임
+     기준 강제 높이)가, 실제 서문 텍스트 길이보다 훨씬 커서 서문과 바로 아래
+     지도교수/참여자 명단(.about-credits-wrapper) 사이에 거대한 빈 여백을
+     만들고 있었음 — 서문 박스가 내용과 무관하게 항상 651px 높이를 차지하며
+     다음 형제 요소를 그만큼 아래로 밀어냈기 때문. min-height 강제를 완전히
+     제거하고, 순수 margin-bottom(48px)만으로 서문↔명단 간격을 연결함(스크롤
+     시 카피라이트 푸터만 화면 밖으로 미는 로직은 여전히 아래 JS
+     updateAboutFooterPush가 별도로 담당) */
   border-left: 1px solid #000000;
   padding-top: 0;
   padding-left: 1.7413cqw; /* 7px / 402px */
-  margin-bottom: 0;
+  margin-bottom: 11.9403cqw; /* 48px / 402px — 서문과 지도교수/참여자 명단 사이 간격 */
 }
 /* 문단 4개(한글 2 + 영문 2)를 진짜 <p> 요소로 분리해서 nth-child로 문단별
    들여쓰기/여백을 각각 제어함:
@@ -1510,7 +1509,14 @@ body.mobile-mode.is-scroll-top .m-header-fade {
 /* 카피라이트 푸터: 참여자 명단 끝~푸터 사이 여백만 이 블록 고유값(24px) —
    폰트/세로선/여백 등 나머지는 전부 .common-footer(전역 공통 클래스)가 담당 */
 .about-copyright-footer {
-  margin-top: 24px;
+  margin-top: 19.9005cqw; /* 80px / 402px — 참여자 명단과 카피라이트 푸터 사이
+                              기본 간격(실제 위치는 JS updateAboutFooterPush가
+                              스크롤을 요구하도록 동적으로 더 밀어냄) */
+  /* [버그 수정] #mFooter(랜딩/POSTERS/개인상세 공용 푸터)는 이미 하단 고정
+     탭바(#mTabs)에 안 가리도록 padding-bottom을 갖고 있는데, ABOUT 전용
+     카피라이트 푸터에는 이 여백이 없어서 맨 끝까지 스크롤하면 탭바 뒤로
+     텍스트가 가려질 수 있었음 — 120px로 맞춰줌 */
+  padding-bottom: 120px;
 }
 /* 하단 카피라이트 푸터 전역 공통 스타일 — 랜딩/POSTERS/개인상세(#mFooter)와
    ABOUT(.about-copyright-footer) 전부 이 클래스 하나로 통일함. 뷰가 바뀌어도
