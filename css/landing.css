@@ -1526,6 +1526,17 @@ body.mobile-mode.is-scroll-top .m-header-fade {
 /* 'XU NING'처럼 이름에 공백이 포함된 경우 셀 안에서 두 줄로 쪼개지지
    않도록 항상 한 줄로 고정 */
 .m-participant-name { white-space: nowrap; }
+/* [버그 수정] 참여자 명단은 그리드 트랙이 minmax(0,1fr)라 이름이 길면 셀
+   자체는 좁게 유지된 채 텍스트만 nowrap으로 오른쪽 이웃 칸까지 자연스럽게
+   삐져나가도록 의도되어 있음(#97) — 그런데 하이라이트 오버레이(::before)는
+   이 "좁은 셀 박스" 자신의 크기(getBoundingClientRect)만큼만 깔리므로, 이름이
+   삐져나온 뒷부분에는 오버레이가 전혀 닿지 못해 그 지점부터 갑자기 원래
+   검정색으로 뚝 끊겨 보였음 — 오버레이 박스를 오른쪽으로 넉넉히 늘려서
+   삐져나온 이름 끝까지 항상 덮이게 함(흰 배경 위에 얹히는 부분은 반투명
+   흰색이라 티가 안 나서 안전함) */
+body.mobile-mode .m-participant-name::before {
+  inset: 0 -120px 0 0;
+}
 /* 카피라이트 푸터: .about-credits-wrapper 밖의 독립 형제 요소지만, 위쪽
    블록들(기조글/크레딧)과 같은 패턴으로 자기 자신만의 border-left(x=186)를
    가짐 — 크레딧 블록 세로선이 참여자 명단 끝에서 멈추는 것과 별개로, 이
@@ -1583,6 +1594,14 @@ body.mobile-mode.is-scroll-top .m-header-fade {
   line-height: 3.9801cqw; /* 16px / 402px */
   letter-spacing: -0.01em;
   color: #000000;
+  /* [버그 수정] <br>로 이미 3줄(2026 © Hongik University / Dept. of Visual
+     Communication Design. / All Rights Reserved)로 나눠뒀는데도, 화면 폭이
+     좁거나 비율이 달라지면 그 중 한 줄이 컨테이너보다 길어져 스스로 또
+     줄바꿈되어 4줄처럼 보이는 문제가 있었음 — nowrap으로 각 <br> 줄 자체가
+     더 이상 쪼개지지 않도록 고정(폭이 아주 좁은 기기에서는 대신 옆으로
+     살짝 넘칠 수 있으나, #mobilePage의 overflow-x:clip이 페이지 레이아웃
+     자체가 밀리는 것은 막아줌) */
+  white-space: nowrap;
 }
 
 /* .m-view: 기본 리스트(#mListView)와 ABOUT(#mAboutView)처럼 헤더의 좌측
@@ -1992,5 +2011,12 @@ body.mobile-mode .detail-description-wrapper::before {
      바깥쪽 1px 선까지는 덮지 못해 세로선만 항상 순수 검정으로 남아있었음.
      left를 1px 더 왼쪽으로 밀어서 border-left 픽셀까지 오버레이가 덮도록 함
      (다른 요소는 border가 없으므로 영향 없음) */
-  left: -1px;
+  /* [버그 수정] 참여자 명단/상세 설명 블록처럼 콘텐츠가 많은 요소는 실제
+     렌더링된 텍스트 덩어리가 자기 자신의 레이아웃 박스(inset:0 기준) 오른쪽/
+     아래쪽 경계에 거의 딱 붙어서, 서브픽셀 반올림 오차만으로도 마지막 줄/
+     오른쪽 끝 글자가 오버레이 밖으로 살짝 벗어나 그 지점만 하이라이트가
+     안 먹고 원래 검정으로 뚝 끊겨 보이는 경우가 있었음 — 오른쪽/아래쪽으로
+     2px씩 더 여유를 둬서 경계 부근에서 절대 잘리지 않게 함(.poster-box에
+     이미 적용한 것과 동일한 안전 여백 기법) */
+  inset: 0 -2px -2px -1px;
 }

@@ -1566,12 +1566,32 @@ function openMobilePerson(idx) {
   renderMobilePerson(idx);
   showPersonHeader(idx);
   document.getElementById('mobilePage').classList.add('person-open');
+  /* [버그 수정] POSTERS 그리드에서 포스터를 클릭해 개인 상세 페이지로 들어와도
+     .m-tab[data-tab="posters"]에 남아있던 .active(밑줄)가 그대로 유지되는
+     문제가 있었음 — 개인 상세 페이지는 ABOUT/POSTERS 탭이 활성화된 상태가
+     아니라 완전히 별개의 상태이므로, 진입 시 모든 탭의 밑줄을 꺼줌
+     (posters-open 클래스 자체는 건드리지 않으므로 닫기(✕)를 누르면 그대로
+     POSTERS 그리드로 돌아감 — 밑줄만 closeMobilePerson()에서 다시 복원) */
+  document.querySelectorAll('.m-tab').forEach(btn => btn.classList.remove('active'));
   document.body.scrollTop = 0; /* body가 실제 스크롤 컨테이너 — 상세 페이지는 항상 맨 위에서 시작 */
   scheduleMobileGradientMetricsUpdate(); /* 상세 페이지 콘텐츠(설명문/갤러리)로 --page-h/좌표 다시 계산 */
 }
 
 function closeMobilePerson() {
-  document.getElementById('mobilePage').classList.remove('person-open');
+  const mobilePage = document.getElementById('mobilePage');
+  mobilePage.classList.remove('person-open');
+  /* [버그 수정] 위 openMobilePerson()에서 꺼둔 탭 밑줄을, 상세 페이지를 닫고
+     원래 있던 ABOUT/POSTERS 그리드로 돌아올 때 다시 켜줌 — mobilePage에
+     그대로 남아있던 about-open/posters-open 클래스를 기준으로 판단함
+     (랜딩 리스트에서 바로 들어온 경우엔 둘 다 없으므로 아무 탭도 안 켜짐,
+     기존 동작과 동일) */
+  if (mobilePage.classList.contains('about-open')) {
+    const aboutTab = document.querySelector('.m-tab[data-tab="about"]');
+    if (aboutTab) aboutTab.classList.add('active');
+  } else if (mobilePage.classList.contains('posters-open')) {
+    const postersTab = document.querySelector('.m-tab[data-tab="posters"]');
+    if (postersTab) postersTab.classList.add('active');
+  }
   restoreLandingHeader();
   mNavigating = false; /* 목록으로 돌아왔으니 다음 클릭을 다시 받을 수 있게 해제 */
   document.body.scrollTop = mSavedScrollTop; /* 원래 목록 스크롤 위치로 복원 */
