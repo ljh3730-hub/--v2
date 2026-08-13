@@ -1913,10 +1913,11 @@ body.mobile-mode #mFooter {
   display: block;
   font-family: var(--font-ko);
   font-size: 3.2338cqw; /* 13px / 402px -- .detail-desc-ko/en과 동일 */
-  font-weight: 700;
+  font-weight: 500; /* [디자인 변경] 볼드 대신 밑줄로 통일(데스크톱 .person-video와 톤 맞춤) */
   line-height: 5.4726cqw; /* 22px / 402px */
   letter-spacing: -0.01em;
   color: #000000;
+  text-decoration: underline;
 }
 /* 개인 상세 페이지 작업 설명문(한글/영문) 복원: 부모(.detail-content)가 이미
    padding-left:14px(3.4826cqw)로 헤더 세로선과 같은 x좌표에서 시작하므로,
