@@ -1785,31 +1785,31 @@ function glowForDistance(dist, radius) {
 }
 function updateHeaderLineGlow(shimmerX) {
   if (!mHeaderLineEls) {
+    /* [버그 수정 4차] div의 background-color를 매 프레임 바꾸는 방식은
+       실기기 사파리에서 sticky 조상 내부 얇은 요소의 아래쪽 일부만 리페인트
+       안 되는 문제가 있어(스크린샷 픽셀 대조로 재현/확인, GPU 레이어 승격만
+       으로는 해결 안 됨), 이 두 선을 SVG(rect)로 바꾸고 매 프레임 rect의
+       fill 속성을 직접 갱신하는 방식으로 교체함(HTML 박스 페인팅 경로 자체를
+       안 타므로 같은 버그의 영향을 받지 않음) — el은 이제 <svg>, 실제 색을
+       칠하는 대상은 그 안의 <rect> 자식 */
     mHeaderLineEls = [
       document.querySelector('.m-header-line'),
       document.querySelector('.m-header-line-right'),
-    ].filter(Boolean);
+    ].filter(Boolean).map(svg => ({ svg, rect: svg.querySelector('rect') })).filter(o => o.rect);
   }
   if (!mHeaderLineEls.length) return;
   const centerY = mobilePageLogicalH / 2; /* 공유 그라데이션의 세로 중심(50%)과 동일 기준 */
-  mHeaderLineEls.forEach(el => {
-    const elX = parseFloat(el.style.getPropertyValue('--el-x')) || 0;
-    const elY = parseFloat(el.style.getPropertyValue('--el-y')) || 0;
+  mHeaderLineEls.forEach(({ svg, rect }) => {
+    const elX = parseFloat(svg.style.getPropertyValue('--el-x')) || 0;
+    const elY = parseFloat(svg.style.getPropertyValue('--el-y')) || 0;
     const dx = shimmerX - elX;
     const dy = centerY - elY;
     const dist = Math.sqrt(dx * dx + dy * dy);
     const glow = glowForDistance(dist, mobileSpotRadiusPx);
-    /* [버그 수정 2차] --line-glow를 opacity로 쓰는 ::before 오버레이 방식도
-       실기기에서 효과가 없었음 -- 자식 가상요소가 부모(.m-vertical-line, 검정
-       배경) 위에 그려지는 페인트 순서 자체가 sticky 조상 안에서 사파리가
-       깨뜨리는 것으로 의심됨(가상요소 자체를 아예 안 씀). 그래서 이제
-       가상요소를 완전히 배제하고, 선 요소 자신의 실제 background-color를
-       흰색(255)/검정(0) 사이에서 직접 보간해 매 프레임 인라인으로 씀 --
-       페인트 순서에 의존하지 않는 가장 단순하고 확실한 방식(라디얼
-       그라데이션의 흰색이 검정 배경 위에 알파 glow로 얹힌 것과 동일한
-       최종 색이 나오도록 v=255*glow로 환산) */
+    /* 라디얼 그라데이션의 흰색이 검정 배경 위에 알파 glow로 얹힌 것과 동일한
+       최종 색이 나오도록 v=255*glow로 환산 */
     const v = Math.round(Math.max(0, Math.min(1, glow)) * 255);
-    el.style.backgroundColor = 'rgb(' + v + ',' + v + ',' + v + ')';
+    rect.setAttribute('fill', 'rgb(' + v + ',' + v + ',' + v + ')');
   });
 }
 

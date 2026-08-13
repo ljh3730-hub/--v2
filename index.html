@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon-v3.png"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"/>
 <link rel="stylesheet" href="css/common.css?v=2.0"/>
-<link rel="stylesheet" href="css/landing.css?v=3.9"/>
+<link rel="stylesheet" href="css/landing.css?v=4.0"/>
 </head>
 <body>
 <div id="page">
@@ -118,7 +118,14 @@
            대상이 될 수 없음) 배경 그라데이션 애니메이션이 침투하지 못했음.
            실제 요소로 바꿔서 아래 리스트의 .m-list-line과 함께 랜딩 배경
            그라데이션을 공유하도록 함(둘 다 .m-vertical-line 클래스) -->
-      <div class="m-vertical-line m-header-line"></div>
+      <!-- [버그 수정 4차] div+background-color 방식은 실기기 사파리에서 sticky
+           조상 안에 있는 이 얇은 선의 아래쪽 약 12%만 매 프레임 리페인트가
+           안 되고 이전 색 그대로 남는(스크린샷 픽셀 대조로 재현/확인됨,
+           GPU 레이어 승격만으로는 해결 안 됨) 문제가 있어, HTML 박스
+           페인팅 경로 자체를 완전히 우회하도록 SVG(rect)로 바꿈 — SVG는
+           별도의 렌더링 파이프라인이라 이 버그의 영향을 받지 않음(밝기는
+           JS가 매 프레임 rect의 fill 속성을 직접 씀, updateHeaderLineGlow) -->
+      <svg class="m-vertical-line m-header-line" viewBox="0 0 1 1" preserveAspectRatio="none"><rect width="1" height="1" fill="#000000"/></svg>
       <div class="m-header-left">
         <div class="m-title-ko">이것은 전시가 아니다</div>
         <div class="m-title-en">This is not an Exhibition</div>
@@ -126,7 +133,7 @@
       <!-- [그라데이션 연동] #mHeader::after(x=186 우측 세로선)도 실제 DOM div로
            분리 — 좌측 선과 동일한 이유(가상요소는 좌표를 잴 수 없어 그라데이션이
            침투 못함) -->
-      <div class="m-vertical-line m-header-line-right"></div>
+      <svg class="m-vertical-line m-header-line-right" viewBox="0 0 1 1" preserveAspectRatio="none"><rect width="1" height="1" fill="#000000"/></svg>
       <div class="m-header-right" id="mHeaderDate"></div>
       <!-- [스크롤 페이드 마스크] 헤더(sticky) 바로 아래로 스크롤되어 사라지는
            콘텐츠(리스트/ABOUT/POSTERS/상세 전부 공유하는 이 헤더 하나만 있으면
@@ -182,6 +189,6 @@
   </div>
 </div>
 
-<script src="js/landing.js?v=2.6"></script>
+<script src="js/landing.js?v=2.7"></script>
 </body>
 </html>

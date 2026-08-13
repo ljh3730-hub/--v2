@@ -1158,23 +1158,22 @@ body.tablet-mode .m-poster-caption { font-size: 13px; line-height: 20px; }
   top: 1.375rem;
   height: 24.8756cqw; /* 예전 #mHeader::after와 완전히 동일한 위치/길이 */
 }
-/* [버그 수정 3차] 실기기 스크린샷을 픽셀 단위로 직접 대조해서 찾은 원인:
-   background-color를 매 프레임 JS로 바꾸는데, 선(가늘고 긴 absolute 자식)의
-   위쪽 88%는 매 프레임 정상적으로 새 색으로 갱신되는데 맨 아래 약 10~15%
-   구간만 항상 오래된(더 어두운) 색 그대로 남아 마치 선이 중간에 뚝 끊겨
-   두 조각인 것처럼 보임 — sticky 조상(#mHeader) 내부에서 사파리 컴포지터가
-   이 얇은 요소의 박스 전체를 한 번에 리페인트하지 않고 일부 스트립만
-   갱신하는 것으로 추정됨(예전엔 ::before 가상요소에 translateZ(0)로 별도
-   GPU 레이어 승격을 줬었는데, 이제 색이 바뀌는 대상이 가상요소가 아니라
-   이 요소 자신이므로 승격 위치를 옮겨야 함). 이 두 선 요소 자신을 독립된
-   합성 레이어로 강제 승격시켜 부분 리페인트로 인한 스냅샷 잔상을 방지 */
+/* [버그 수정 3차 -> 4차] div의 background-color를 매 프레임 JS로 바꾸는
+   방식은 실기기 스크린샷 픽셀 대조로 재현 확인된 문제가 있었음: 선의 위쪽
+   ~88%는 매 프레임 정상 갱신되는데 맨 아래 ~12%만 이전 프레임 색 그대로
+   남아 두 조각처럼 보임 -- sticky 조상(#mHeader) 내부 얇은 요소의 부분
+   리페인트/타일링 문제로 추정. translateZ(0) GPU 레이어 승격(3차)만으로는
+   완전히 해결되지 않아(경계 위치.비율은 동일하게 재현됨), 4차에서 이 두
+   선을 아예 HTML div가 아닌 SVG(rect)로 바꿈(index.html) -- background-color
+   페인팅 경로 자체를 타지 않는 별도 렌더링 파이프라인이라 이 버그의 영향을
+   구조적으로 받지 않음. 아래는 SVG 루트가 기존 div와 동일하게 절대위치
+   박스로 동작하도록 최소 보정만 함(색은 이제 내부 rect의 fill 속성으로,
+   JS updateHeaderLineGlow 참고) */
 .m-header-line,
 .m-header-line-right {
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  will-change: background-color;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  display: block;
+  overflow: visible;
+  background: none; /* SVG 루트 자신의 배경은 안 씀 -- 내부 rect의 fill만 사용 */
 }
 .m-list-line {
   top: 0;
