@@ -1208,6 +1208,15 @@ body.tablet-mode .m-poster-caption { font-size: 13px; line-height: 20px; }
   pointer-events: none;
   top: 0;
   bottom: 0; /* #mListView 전체 높이만큼 — 예전 .m-view::before와 동일 */
+  /* [버그 수정 2차] 각 .m-row-name/.m-row-title(27행x2=54개)이
+     MOBILE_GRADIENT_SELECTOR에 포함되어 자체 GPU 레이어로 승격되는데,
+     이 선만 승격이 안 되어 있으면 사파리 컴포지터가 각 행 레이어 경계에서
+     이 선을 다른 타일로 쪼개 그리면서 행 높이(약 47px) 주기로 끊겨
+     보이는(점선처럼 보이는) 아티팩트가 생김 -- 헤더선(SVG)과 동일하게
+     이 선도 자기 GPU 레이어로 승격해서 행 레이어들과 섞이지 않게 함 */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: background-color;
 }
 body.mobile-mode .m-vertical-line::before {
   content: '';
