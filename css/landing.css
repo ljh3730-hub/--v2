@@ -1199,11 +1199,16 @@ body.mobile-mode .m-vertical-line::before {
    sticky/calc() 조합을 아예 타지 않으므로 더 안정적으로 동작함. 뒤에 오는
    규칙이라 소스 순서상으로도 위 .m-vertical-line::before보다 이기지만,
    혹시 모를 우선순위 충돌을 막기 위해 !important도 같이 둠 */
+/* [버그 수정 2차] opacity:var(--line-glow)를 쓰는 ::before 오버레이 방식도
+   실기기(사파리)에서 전혀 효과가 없었음 -- 자식 가상요소가 부모(검정 배경)
+   위에 그려지는 페인트 순서 자체가 sticky 조상 내부에서 깨지는 것으로
+   의심되어, 가상요소 자체를 완전히 배제함(JS가 이제 이 두 선 요소 자신의
+   실제 background-color를 직접 흰색<->검정 사이로 인라인 보간함 --
+   updateHeaderLineGlow 참고). 혹시 남아있는 이 가상요소가 검정 배경 위에
+   깔려 실제 효과를 가리는 추가 레이어가 되지 않도록 아예 렌더링에서 제외 */
 body.mobile-mode .m-vertical-line.m-header-line::before,
 body.mobile-mode .m-vertical-line.m-header-line-right::before {
-  background-image: none !important;
-  background: #ffffff !important;
-  opacity: var(--line-glow, 0) !important;
+  display: none !important;
 }
 .m-header-left {
   /* 선 위치(x=14) + 7px 여백 = x=21, 402px 기준 5.2239cqw로 하나로 합침 —

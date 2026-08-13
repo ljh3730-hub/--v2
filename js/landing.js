@@ -1799,7 +1799,17 @@ function updateHeaderLineGlow(shimmerX) {
     const dy = centerY - elY;
     const dist = Math.sqrt(dx * dx + dy * dy);
     const glow = glowForDistance(dist, mobileSpotRadiusPx);
-    el.style.setProperty('--line-glow', glow);
+    /* [버그 수정 2차] --line-glow를 opacity로 쓰는 ::before 오버레이 방식도
+       실기기에서 효과가 없었음 -- 자식 가상요소가 부모(.m-vertical-line, 검정
+       배경) 위에 그려지는 페인트 순서 자체가 sticky 조상 안에서 사파리가
+       깨뜨리는 것으로 의심됨(가상요소 자체를 아예 안 씀). 그래서 이제
+       가상요소를 완전히 배제하고, 선 요소 자신의 실제 background-color를
+       흰색(255)/검정(0) 사이에서 직접 보간해 매 프레임 인라인으로 씀 --
+       페인트 순서에 의존하지 않는 가장 단순하고 확실한 방식(라디얼
+       그라데이션의 흰색이 검정 배경 위에 알파 glow로 얹힌 것과 동일한
+       최종 색이 나오도록 v=255*glow로 환산) */
+    const v = Math.round(Math.max(0, Math.min(1, glow)) * 255);
+    el.style.backgroundColor = 'rgb(' + v + ',' + v + ',' + v + ')';
   });
 }
 
