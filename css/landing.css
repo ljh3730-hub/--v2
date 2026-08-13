@@ -1535,7 +1535,7 @@ body.mobile-mode.is-scroll-top .m-header-fade {
    삐져나온 이름 끝까지 항상 덮이게 함(흰 배경 위에 얹히는 부분은 반투명
    흰색이라 티가 안 나서 안전함) */
 body.mobile-mode .m-participant-name::before {
-  inset: 0 -120px 0 0;
+  inset: 0 -120px -3px 0;
 }
 /* 카피라이트 푸터: .about-credits-wrapper 밖의 독립 형제 요소지만, 위쪽
    블록들(기조글/크레딧)과 같은 패턴으로 자기 자신만의 border-left(x=186)를
@@ -1649,7 +1649,9 @@ body.mobile-mode #mTabs {
      버튼이 겹치지 않도록, 기존 24px 여백에 안전 영역만큼을 더 얹음 —
      safe-area-inset-bottom을 지원하지 않는 기기는 0으로 계산되어 기존과
      완전히 동일하게 24px만 적용됨(회귀 없음) */
-  z-index: 100;
+  /* [버그 수정] .detail-content(z-index:100)와 같은 값이라 DOM 순서로만
+     간신히 이기고 있었음 — #mTabsBg(140)보다 확실히 위에 오도록 141로 올림 */
+  z-index: 141;
 }
 /* [디자인 변경] 시안(첨부 목업) 반영: 화면 전체 폭으로 퍼지는 페이드 대신,
    ABOUT/POSTERS/X 버튼 클러스터만 감싸는 '떠 있는 흰색 캡슐'로 바꿈 — 딱딱한
@@ -1662,26 +1664,25 @@ body.mobile-mode #mTabs {
 body.mobile-mode #mTabsBg {
   display: block;
   position: fixed;
-  left: 50%;
+  left: 0;
+  right: 0;
   bottom: 0;
-  transform: translateX(-50%);
-  width: calc(100% - 64px);
-  max-width: 340px; /* 버튼 클러스터(#mTabs, 최대 402px)보다 살짝 좁게 잡아,
-                        화면 가장자리에 안 닿고 중앙에 아담하게 뜬 캡슐 형태를
-                        만듦 */
+  /* [버그 수정] 버튼 클러스터만 감싸는 좁은(340px) 캡슐로 두면, 실제 기기
+     (390~400px 폭)에서는 캡슐 밖 좌우 약 30px씩 포스터 그리드 이미지가
+     그대로 노출되어 "배경이 중간에 잘려있다"는 버그로 이어졌음 — 화면 가로
+     전체(100%, 즉 100vw)를 다시 꽉 채우도록 되돌림 */
+  width: 100%;
   height: 96px; /* 탭바 실측 높이(패딩 48px+24px+콘텐츠)를 덮는 값 */
-  /* [버그 수정] filter:blur()로 캡슐 가장자리를 흐리는 방식은 position:fixed
-     요소에서 일부 WebKit/모바일 Safari 버전이 블러 반경을 요소 자신의
-     레이아웃 박스 밖으로 제대로 못 새어나가게 하는(clip) 알려진 렌더링
-     제약이 있어서, 의도한 "부드러운 후광" 대신 오히려 딱딱한 흰색 사각형
-     그대로 보이는 문제가 있었음(이번에 리포트된 "네모 상자" 버그의 원인으로
-     보임). 크로스 브라우저에서 항상 확실하게 동작하는 linear-gradient
-     페이드로 교체 — 위쪽만 투명→흰색으로 부드럽게 넘어가고 아래쪽은
-     자연스러운 불투명 흰색으로 이어짐(요청 수치 그대로 반영: 0%/35%/100%) */
   background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 35%, #ffffff 100%);
   transition: opacity 0.3s ease;
   pointer-events: none; /* 장식용 레이어 — 뒤 콘텐츠 클릭/스크롤을 막지 않음 */
-  z-index: 99; /* #mTabs(z-index:100) 버튼 아래, 나머지 콘텐츠보다는 위 */
+  /* [버그 수정] 개인 상세 페이지(.detail-content)가 z-index:100(+ position:relative)
+     으로 스스로를 헤더보다는 낮게, 나머지 콘텐츠보다는 높게 쌓아뒀는데,
+     이 배경 레이어는 z-index:99라 그보다 낮아서 상세 페이지의 사진/콘텐츠가
+     이 흰색 배경 위로 그대로 덮여 그려져 "흰 배경이 아예 안 보이고 글자만
+     떠 있는" 버그가 있었음 — .detail-content(100)보다 확실히 높게 올림
+     (#mHeader의 150보다는 낮게 유지해 헤더는 항상 그 위에 그대로 보임) */
+  z-index: 140;
 }
 /* #mTabs.is-bottom(카피라이트 푸터가 화면에 들어왔을 때, 기존 IntersectionObserver
    로직)과 완전히 같은 타이밍에 캡슐도 사라지도록 형제 선택자로 연동함 —
