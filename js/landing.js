@@ -1829,13 +1829,34 @@ function updateHeaderLineGlow(shimmerX) {
   });
 }
 
-/* [버그 수정 6차 - 최종] 리스트 좌측 세로선은 공유 라디얼 그라데이션, JS
-   solid backgroundColor, GPU 레이어 승격, 단일 SVG rect, 행별 SVG 조각(0px/2px
-   겹침) 등 여러 방식을 시도했지만 실기기 사파리에서 매번 점선처럼 끊겨
-   보이는 문제가 반복됐음. 더 이상 이 선에 애니메이션(빛 스윕)을 태우지
-   않기로 함 -- #mListView에 애초의 단순한 정적 검정 실선(.m-list-line,
-   HTML 참고)만 두고 JS는 전혀 건드리지 않음. 헤더 세로선(.m-header-line)
-   애니메이션은 그대로 유지됨 */
+/* [버그 수정 7차 - 진짜 원인 확정] 점선 아티팩트의 진짜 원인은 DOM 순서였음
+   (index.html 참고 -- 이 선이 #mList 실제 콘텐츠보다 먼저 와서 형제 요소들
+   사이에 끼어있었음, 헤더 세로선 7차 수정과 동일 원인). 순서를 바로잡았으니
+   다시 안전하게 애니메이션을 얹음 -- 가장 단순한 plain div + backgroundColor
+   방식(1차 시도와 동일한 코드)으로 되돌림. 선은 세로로 매우 길어서 "맨 위
+   좌표"를 대표값으로 쓰면 안 되고(항상 페이지 중심에서 멀리 떨어진 것처럼
+   계산됨), 선 자신의 세로 중앙 지점을 대표 y로 써서 페이지 중앙 부근에
+   있는 것처럼 자연스럽게 반응하게 함 */
+let mListLineEl = null;
+function updateListLineGlow(shimmerX) {
+  if (mListLineEl === null) {
+    mListLineEl = document.querySelector('.m-list-line') || false;
+  }
+  if (!mListLineEl) return;
+  const rect = mListLineEl.getBoundingClientRect();
+  const mp = document.getElementById('mobilePage');
+  if (!mp) return;
+  const mpRect = mp.getBoundingClientRect();
+  const elX = rect.left - mpRect.left;
+  const elMidY = (rect.top - mpRect.top) + rect.height / 2;
+  const centerY = mobilePageLogicalH / 2;
+  const dx = shimmerX - elX;
+  const dy = centerY - elMidY;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const glow = glowForDistance(dist, mobileSpotRadiusPx);
+  const v = Math.round(Math.max(0, Math.min(1, glow)) * 255);
+  mListLineEl.style.backgroundColor = 'rgb(' + v + ',' + v + ',' + v + ')';
+}
 
 function tickShimmer(now) {
   if (isMobileViewport()) {
@@ -1844,6 +1865,7 @@ function tickShimmer(now) {
     const mp = document.getElementById('mobilePage');
     if (mp) mp.style.setProperty('--shimmer-x', x + 'px');
     updateHeaderLineGlow(x);
+    updateListLineGlow(x);
     requestAnimationFrame(tickShimmer);
     return;
   }
