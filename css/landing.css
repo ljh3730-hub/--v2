@@ -1174,6 +1174,13 @@ body.tablet-mode .m-poster-caption { font-size: 13px; line-height: 20px; }
   display: block;
   overflow: visible;
   background: none; /* SVG 루트 자신의 배경은 안 씀 -- 내부 rect의 fill만 사용 */
+  transform: translateZ(0); /* [버그 수정 5차] SVG 루트 자체도 독립 레이어로 승격 */
+  -webkit-transform: translateZ(0);
+}
+.m-header-line rect,
+.m-header-line-right rect {
+  transform: translateZ(0); /* rect 자신도 승격 -- fill이 바뀌는 실제 대상 */
+  -webkit-transform: translateZ(0);
 }
 .m-list-line {
   top: 0;

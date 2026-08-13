@@ -1810,6 +1810,16 @@ function updateHeaderLineGlow(shimmerX) {
        최종 색이 나오도록 v=255*glow로 환산 */
     const v = Math.round(Math.max(0, Math.min(1, glow)) * 255);
     rect.setAttribute('fill', 'rgb(' + v + ',' + v + ',' + v + ')');
+    /* [버그 수정 5차] SVG rect로 바꾼 뒤에도 실기기에서 동일한 위치(선 하단
+       ~12%)에 예전 프레임 색이 남는 현상이 그대로 재현된다는 실측 보고 --
+       페인팅 경로(div bg-color -> SVG fill)를 완전히 바꿔도 같은 비율로
+       재현된다는 건 이게 "무엇으로 칠하는지"의 문제가 아니라 "다시
+       리페인트하라는 신호 자체를 사파리가 이 레이어 일부에서 놓친다"는
+       뜻일 가능성이 커서, fill을 바꾼 직후 강제로 동기 레이아웃/페인트를
+       한 번 더 유발시켜(getBoundingClientRect 호출은 브라우저가 대기 중인
+       스타일 변경을 즉시 반영하도록 강제하는 부수효과가 있음) 그 신호가
+       누락되지 않게 함 */
+    void svg.getBoundingClientRect();
   });
 }
 
