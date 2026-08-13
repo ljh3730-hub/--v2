@@ -1667,13 +1667,18 @@ body.mobile-mode #mTabsBg {
   transform: translateX(-50%);
   width: calc(100% - 64px);
   max-width: 340px; /* 버튼 클러스터(#mTabs, 최대 402px)보다 살짝 좁게 잡아,
-                        시안처럼 화면 가장자리에 안 닿고 중앙에 아담하게 뜬
-                        캡슐 형태를 만듦 */
-  height: 96px; /* 탭바 실측 높이(패딩 48px+24px+콘텐츠)를 덮고, 블러 반경만큼의
-                    여유도 포함한 값 */
-  background: #ffffff;
-  filter: blur(20px); /* 캡슐 가장자리를 부드럽게 흐림 — 중앙부는 순백 그대로
-                          유지되고 경계 부근만 자연스럽게 옅어짐 */
+                        화면 가장자리에 안 닿고 중앙에 아담하게 뜬 캡슐 형태를
+                        만듦 */
+  height: 96px; /* 탭바 실측 높이(패딩 48px+24px+콘텐츠)를 덮는 값 */
+  /* [버그 수정] filter:blur()로 캡슐 가장자리를 흐리는 방식은 position:fixed
+     요소에서 일부 WebKit/모바일 Safari 버전이 블러 반경을 요소 자신의
+     레이아웃 박스 밖으로 제대로 못 새어나가게 하는(clip) 알려진 렌더링
+     제약이 있어서, 의도한 "부드러운 후광" 대신 오히려 딱딱한 흰색 사각형
+     그대로 보이는 문제가 있었음(이번에 리포트된 "네모 상자" 버그의 원인으로
+     보임). 크로스 브라우저에서 항상 확실하게 동작하는 linear-gradient
+     페이드로 교체 — 위쪽만 투명→흰색으로 부드럽게 넘어가고 아래쪽은
+     자연스러운 불투명 흰색으로 이어짐(요청 수치 그대로 반영: 0%/35%/100%) */
+  background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 35%, #ffffff 100%);
   transition: opacity 0.3s ease;
   pointer-events: none; /* 장식용 레이어 — 뒤 콘텐츠 클릭/스크롤을 막지 않음 */
   z-index: 99; /* #mTabs(z-index:100) 버튼 아래, 나머지 콘텐츠보다는 위 */
@@ -1954,11 +1959,18 @@ body.mobile-mode #mFooter {
    높이가 다른 긴 뷰들과 비슷한 수준으로 회복됐으므로, 안전하게 다시
    포함시킴(아이패드처럼 뷰포트가 큰 기기에서도 히어로가 뷰포트 높이에
    비례해 같이 커지므로 반지름/높이 비율은 항상 동일하게 유지됨) */
+/* [버그 수정] .m-tab/.m-tab-close(ABOUT/POSTERS/X)는 이제 #mTabsBg(항상
+   흰색 그라데이션 캡슐) 위에 항상 떠 있어서 이미 늘 선명하게 보임 —
+   여기에 움직이는 스팟 하이라이트(::before, 딱 맞는 각진 박스)까지 겹쳐지면
+   두 흰색 레이어의 경계/타이밍이 서로 안 맞아서 스팟이 지나갈 때마다
+   버튼 글자 주변에 네모난 흰 상자가 툭 튀어나오는 것처럼 보였음 — 탭
+   라벨은 이 공유 하이라이트 버킷에서 완전히 제외함(다른 텍스트 요소는
+   변화 없음) */
 body.mobile-mode :is(
   .m-row-name, .m-row-title, .m-title-ko, .m-title-en, .m-header-right,
   .about-p-ko, .about-p-en, .m-meta-univ-block, .m-meta-row,
   .m-participant-name, .common-footer, .detail-desc-ko, .detail-desc-en,
-  .m-person-video, .m-poster-caption, .m-hr, .m-tab, .m-tab-close,
+  .m-person-video, .m-poster-caption, .m-hr,
   .about-statement-wrapper, .about-credits-wrapper, .detail-description-wrapper
 ) {
   position: relative;
@@ -1967,12 +1979,18 @@ body.mobile-mode :is(
   .m-row-name, .m-row-title, .m-title-ko, .m-title-en, .m-header-right,
   .about-p-ko, .about-p-en, .m-meta-univ-block, .m-meta-row,
   .m-participant-name, .common-footer, .detail-desc-ko, .detail-desc-en,
-  .m-person-video, .m-poster-caption, .m-hr, .m-tab, .m-tab-close,
+  .m-person-video, .m-poster-caption, .m-hr,
   .about-statement-wrapper, .about-credits-wrapper, .detail-description-wrapper
 )::before {
   content: '';
   position: absolute;
-  inset: 0;
+  /* [버그 수정] 글자 오른쪽/아래쪽 끝이 텍스트 자신의 레이아웃 박스 경계에
+     거의 딱 붙어 있으면(줄바꿈 직전 마지막 글자, 포스터 캡션 등), 서브픽셀
+     반올림만으로도 하이라이트가 그 끝 픽셀까지 못 미쳐 그 지점부터 원래
+     검정으로 뚝 끊겨 보이는 경우가 있었음 — 모든 텍스트 요소 공통으로
+     사방에 여유(3px)를 둬서 어떤 요소든 가장자리에서 절대 잘리지 않게 함
+     (흰 배경 위에 얹히는 부분은 반투명 흰색이라 티가 안 나서 안전함) */
+  inset: -3px;
   pointer-events: none;
   /* 사파리 GPU 레이어 승격(데스크톱 #page의 동일 오버레이 규칙과 통일) —
      블렌드/합성이 프레임 중간에 끊기거나 특정 글자만 안 밝아지는 현상 방지 */
