@@ -2066,6 +2066,31 @@ body.mobile-mode :is(
        동일하게 유지됨(reach 불변, 밝기만 완화) */
     rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.38) 40%, rgba(255, 255, 255, 0) 75%); /* [강화 3차] 요청 수치(0.8~0.85대)에 최대한 가깝게 더 올림(0.6->0.75, 0.25->0.38). 화이트아웃(#95)을 냈던 0.95는 여전히 피함. 색 자체는 이미 순수 흰색(255,255,255)이라 더 밝게 바꿀 여지는 없고 투명도만 조절 가능 - 실측해보면 이 효과는 화면 전체가 아니라 공유 원과의 거리에 따라 그 순간 1~2줄만 밝아지는 구조라 나머지는 항상 검정으로 남음, 이게 안 보인다고 느껴지는 주된 이유로 보임(수치만으로는 이 구조 자체는 안 바뀜) */
 }
+/* [기능 추가] 하단 고정 탭바(ABOUT/POSTERS/X)도 다른 텍스트와 동일하게
+   빛이 지나가며 밝아지게 함 -- 예전엔 위 공유 버킷(inset:-3px)에 같이
+   넣었다가 뺐었음: #mTabsBg(항상 흰 배경)라 오버레이 자체는 안 보여야
+   정상인데, 볼드에 글자 크기가 크고 서로 떨어져 있는 이 버튼들만 -3px
+   여유 박스의 사각형 경계가 유독 눈에 띄어(문단 텍스트는 줄마다 겹쳐서
+   경계가 묻히는데 탭은 그런 게 없음) "네모난 흰 상자"처럼 보였음. 이번엔
+   완전히 별도 규칙으로 분리해서 여유 없이(inset:0) 글자 박스에 딱 맞춰
+   경계가 훨씬 덜 보이게 함 */
+body.mobile-mode .m-tab,
+body.mobile-mode .m-tab-close {
+  position: relative;
+}
+body.mobile-mode .m-tab::before,
+body.mobile-mode .m-tab-close::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: translateZ(0);
+  background-repeat: no-repeat;
+  background-size: var(--page-w, 402px) var(--page-h, 900px);
+  background-position: calc(-1 * var(--el-x, 0px)) calc(-1 * var(--el-y, 0px));
+  background-image: radial-gradient(circle var(--spot-radius, 1400px) at var(--shimmer-x, -9999px) 50%,
+    rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.38) 40%, rgba(255, 255, 255, 0) 75%);
+}
 /* [그라데이션 연동] .common-footer(하단 카피라이트)는 자기 자신의 border-left
    (x=186 세로선)를 갖는데, absolute ::before(inset:0)는 기본적으로 padding
    박스 기준이라 border 바깥쪽 1px 선까지는 덮지 못해 세로선만 항상 순수

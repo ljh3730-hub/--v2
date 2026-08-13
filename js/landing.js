@@ -1703,11 +1703,12 @@ const MOBILE_GRADIENT_SELECTOR = [
      display:none으로도 안 눌려서 선 하단 일부가 항상 다른 색으로 남는
      원인이었음, css/landing.css 참고) -- 좌표 측정은 계속 필요해서 여기
      명시적으로 등록 */
-  /* [버그 수정] .m-tab/.m-tab-close는 여기서 뺌 — 이제 #mTabsBg(항상 흰색
-     그라데이션 캡슐) 위에 늘 떠 있어서 이미 항상 선명하게 보이는데, 여기
-     등록되어 있으면 움직이는 스팟 하이라이트(각진 박스)까지 겹쳐져서 스팟이
-     지나갈 때마다 버튼 글자 주변에 흰 네모 상자가 튀어나오는 것처럼 보이는
-     버그가 있었음(CSS 쪽 공유 ::before 버킷에서도 함께 제외함) */
+  /* [기능 추가] .m-tab/.m-tab-close(ABOUT/POSTERS/X)도 다시 등록함 — 예전엔
+     공유 -3px 여유 박스(inset:-3px)가 #mTabsBg 흰 배경 위에서 버튼 글자
+     주변에 네모난 흰 상자로 튀어 보이는 문제가 있어 아예 뺐었는데, 이번엔
+     별도의 전용 규칙(css/landing.css, inset:0 — 여유 없이 글자 박스에 딱
+     맞춤)으로 다시 넣어서 그 문제를 피함 */
+  '.m-tab', '.m-tab-close',
   '.about-statement-wrapper', '.about-credits-wrapper', '.detail-description-wrapper'
   /* [버그 수정] ABOUT 기조문 세로선(x=14)/크레딧 세로선(x=186)과 개인상세
      설명문 세로선(x=14, "거짓말 워크숍 결과물 전시" 옆 세로선처럼 헤더뿐
