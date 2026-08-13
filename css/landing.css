@@ -1165,7 +1165,10 @@ body.tablet-mode .m-poster-caption { font-size: 13px; line-height: 20px; }
 body.mobile-mode .m-vertical-line::before {
   content: '';
   position: absolute;
-  inset: 0;
+  /* [버그 수정] 세로선(헤더/리스트 좌우 세로선) 끝부분 몇 px가 하이라이트
+     박스 경계에 딱 맞아떨어지지 않아 항상 검정으로 남아있는 문제가 있었음 —
+     다른 요소들과 동일하게 사방에 안전 여백을 줌 */
+  inset: -3px !important;
   pointer-events: none;
   /* 사파리 GPU 레이어 승격(데스크톱 #page의 동일 오버레이 규칙과 통일) —
      블렌드/합성이 프레임 중간에 끊기거나 특정 글자만 안 밝아지는 현상 방지 */
@@ -1535,7 +1538,12 @@ body.mobile-mode.is-scroll-top .m-header-fade {
    삐져나온 이름 끝까지 항상 덮이게 함(흰 배경 위에 얹히는 부분은 반투명
    흰색이라 티가 안 나서 안전함) */
 body.mobile-mode .m-participant-name::before {
-  inset: 0 -120px -3px 0;
+  /* [버그 수정] 같은 명세도(specificity)를 가진 아래쪽 공유 :is(...)::before
+     버킷(파일 순서상 이 규칙보다 뒤에 옴)에 밀려서, 실제로는 이 -120px 확장이
+     전혀 적용되지 않고 버킷의 기본 -3px로 되돌아가 있었음(헤드리스 브라우저로
+     getComputedStyle 확인해서 확정) — !important로 순서와 무관하게 항상
+     이기도록 함(.poster-box::before에 이미 적용한 것과 동일한 방식) */
+  inset: 0 -120px -3px 0 !important;
 }
 /* 카피라이트 푸터: .about-credits-wrapper 밖의 독립 형제 요소지만, 위쪽
    블록들(기조글/크레딧)과 같은 패턴으로 자기 자신만의 border-left(x=186)를
