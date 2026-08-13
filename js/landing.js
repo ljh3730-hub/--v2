@@ -1829,6 +1829,35 @@ function updateHeaderLineGlow(shimmerX) {
   });
 }
 
+/* [버그 수정] 리스트 좌측 세로선(.m-list-line)은 #mListView 전체 높이(수천 px,
+   27행)만큼 늘어나는 극단적으로 가늘고 긴 요소라, 공유 라디얼 그라데이션
+   배경을 그 위에 그리면 점선처럼 끊겨 보이는 렌더링 아티팩트가 있었음
+   (헤더 세로선과 같은 부류의 문제) -- 헤더 세로선과 동일하게 매 프레임 JS가
+   계산한 단일 밝기값을 backgroundColor로 직접 칠하는 방식으로 바꿈. 다만
+   이 선은 세로로 매우 길어서 "맨 위 좌표"를 대표값으로 쓰면 안 되고(항상
+   페이지 중심에서 아주 멀리 떨어진 것처럼 계산됨), 선 자신의 세로 중앙
+   지점을 대표 y로 써서 페이지 중앙 부근에 있는 것처럼 자연스럽게 반응하게 함 */
+let mListLineEl = null;
+function updateListLineGlow(shimmerX) {
+  if (mListLineEl === null) {
+    mListLineEl = document.querySelector('.m-list-line') || false;
+  }
+  if (!mListLineEl) return;
+  const rect = mListLineEl.getBoundingClientRect();
+  const mp = document.getElementById('mobilePage');
+  if (!mp) return;
+  const mpRect = mp.getBoundingClientRect();
+  const elX = rect.left - mpRect.left;
+  const elMidY = (rect.top - mpRect.top) + rect.height / 2;
+  const centerY = mobilePageLogicalH / 2;
+  const dx = shimmerX - elX;
+  const dy = centerY - elMidY;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const glow = glowForDistance(dist, mobileSpotRadiusPx);
+  const v = Math.round(Math.max(0, Math.min(1, glow)) * 255);
+  mListLineEl.style.backgroundColor = 'rgb(' + v + ',' + v + ',' + v + ')';
+}
+
 function tickShimmer(now) {
   if (isMobileViewport()) {
     const t = (now % MOBILE_SPOT_ANIM_PERIOD_MS) / MOBILE_SPOT_ANIM_PERIOD_MS;
@@ -1836,6 +1865,7 @@ function tickShimmer(now) {
     const mp = document.getElementById('mobilePage');
     if (mp) mp.style.setProperty('--shimmer-x', x + 'px');
     updateHeaderLineGlow(x);
+    updateListLineGlow(x);
     requestAnimationFrame(tickShimmer);
     return;
   }
