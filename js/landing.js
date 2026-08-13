@@ -1698,6 +1698,11 @@ const MOBILE_GRADIENT_SELECTOR = [
   '.m-vertical-line', /* [버그 수정] 헤더/리스트 좌측 세로선(예전엔 ::before 가상요소라
                           좌표를 잴 수 없었음 — 이제 실제 div라 다른 요소들과 동일하게
                           --el-x/--el-y가 매겨져 그라데이션이 지나감) */
+  '.m-header-line', '.m-header-line-right', /* [버그 수정 6차] 이 두 선은
+     .m-vertical-line 클래스를 뗐음(구 ::before 공유 규칙이 사파리에서
+     display:none으로도 안 눌려서 선 하단 일부가 항상 다른 색으로 남는
+     원인이었음, css/landing.css 참고) -- 좌표 측정은 계속 필요해서 여기
+     명시적으로 등록 */
   /* [버그 수정] .m-tab/.m-tab-close는 여기서 뺌 — 이제 #mTabsBg(항상 흰색
      그라데이션 캡슐) 위에 늘 떠 있어서 이미 항상 선명하게 보이는데, 여기
      등록되어 있으면 움직이는 스팟 하이라이트(각진 박스)까지 겹쳐져서 스팟이

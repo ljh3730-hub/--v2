@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon-v3.png"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"/>
 <link rel="stylesheet" href="css/common.css?v=2.0"/>
-<link rel="stylesheet" href="css/landing.css?v=4.1"/>
+<link rel="stylesheet" href="css/landing.css?v=4.2"/>
 </head>
 <body>
 <div id="page">
@@ -125,7 +125,7 @@
            페인팅 경로 자체를 완전히 우회하도록 SVG(rect)로 바꿈 — SVG는
            별도의 렌더링 파이프라인이라 이 버그의 영향을 받지 않음(밝기는
            JS가 매 프레임 rect의 fill 속성을 직접 씀, updateHeaderLineGlow) -->
-      <svg class="m-vertical-line m-header-line" viewBox="0 0 1 1" preserveAspectRatio="none"><rect width="1" height="1" fill="#000000"/></svg>
+      <svg class="m-header-line" viewBox="0 0 1 1" preserveAspectRatio="none"><rect width="1" height="1" fill="#000000"/></svg>
       <div class="m-header-left">
         <div class="m-title-ko">이것은 전시가 아니다</div>
         <div class="m-title-en">This is not an Exhibition</div>
@@ -133,7 +133,7 @@
       <!-- [그라데이션 연동] #mHeader::after(x=186 우측 세로선)도 실제 DOM div로
            분리 — 좌측 선과 동일한 이유(가상요소는 좌표를 잴 수 없어 그라데이션이
            침투 못함) -->
-      <svg class="m-vertical-line m-header-line-right" viewBox="0 0 1 1" preserveAspectRatio="none"><rect width="1" height="1" fill="#000000"/></svg>
+      <svg class="m-header-line-right" viewBox="0 0 1 1" preserveAspectRatio="none"><rect width="1" height="1" fill="#000000"/></svg>
       <div class="m-header-right" id="mHeaderDate"></div>
       <!-- [스크롤 페이드 마스크] 헤더(sticky) 바로 아래로 스크롤되어 사라지는
            콘텐츠(리스트/ABOUT/POSTERS/상세 전부 공유하는 이 헤더 하나만 있으면
@@ -189,6 +189,6 @@
   </div>
 </div>
 
-<script src="js/landing.js?v=2.8"></script>
+<script src="js/landing.js?v=2.9"></script>
 </body>
 </html>
