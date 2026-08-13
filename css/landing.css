@@ -1632,30 +1632,40 @@ body.mobile-mode #mTabs {
      완전히 동일하게 24px만 적용됨(회귀 없음) */
   z-index: 100;
 }
-/* [버그 수정] 배경 페이드 그라데이션은 더 이상 #mTabs 자신에 걸지 않음 —
-   #mTabs가 402px로 좁게 유지되는 채로 배경까지 갖고 있으면, #mobilePage가
-   훨씬 넓은 태블릿에서 페이드가 화면 중앙 402px에만 좁게 뜨고 그 바깥
-   (포스터 이미지 등)은 페이드 없이 그대로 노출되어 네모난 흰 상자처럼
-   보이는 문제가 있었음. 아래 #mTabsBg(전체 너비 전용 레이어)로 옮김 */
+/* [디자인 변경] 시안(첨부 목업) 반영: 화면 전체 폭으로 퍼지는 페이드 대신,
+   ABOUT/POSTERS/X 버튼 클러스터만 감싸는 '떠 있는 흰색 캡슐'로 바꿈 — 딱딱한
+   1px 경계선 대신 filter:blur()로 캡슐 자체의 가장자리를 부드럽게 흐려서,
+   경계가 어디서 시작하는지 눈에 안 띄게(예전에 있었던 "네모난 흰 상자가
+   툭 튀어나와 보이는" 문제도 하드엣지가 아예 없어져서 함께 해결됨).
+   버튼 텍스트(#mTabs, z-index:100)는 이 블러 레이어 위에 별도로 떠 있어서
+   블러의 영향을 전혀 받지 않음 */
 #mTabsBg { display: none; }
 body.mobile-mode #mTabsBg {
   display: block;
   position: fixed;
-  left: 0;
-  right: 0;
+  left: 50%;
   bottom: 0;
-  height: 98px; /* 탭바 실측 높이(패딩 48px+24px+콘텐츠)와 동일한 값 — 버튼이
-                    떠 있는 영역 전체를 커버해 자연스럽게 페이드됨 */
-  background: linear-gradient(to top, #ffffff 65%, rgba(255, 255, 255, 0) 100%);
-  transition: background 0.3s ease;
+  transform: translateX(-50%);
+  width: calc(100% - 64px);
+  max-width: 340px; /* 버튼 클러스터(#mTabs, 최대 402px)보다 살짝 좁게 잡아,
+                        시안처럼 화면 가장자리에 안 닿고 중앙에 아담하게 뜬
+                        캡슐 형태를 만듦 */
+  height: 96px; /* 탭바 실측 높이(패딩 48px+24px+콘텐츠)를 덮고, 블러 반경만큼의
+                    여유도 포함한 값 */
+  background: #ffffff;
+  filter: blur(20px); /* 캡슐 가장자리를 부드럽게 흐림 — 중앙부는 순백 그대로
+                          유지되고 경계 부근만 자연스럽게 옅어짐 */
+  transition: opacity 0.3s ease;
   pointer-events: none; /* 장식용 레이어 — 뒤 콘텐츠 클릭/스크롤을 막지 않음 */
   z-index: 99; /* #mTabs(z-index:100) 버튼 아래, 나머지 콘텐츠보다는 위 */
 }
 /* #mTabs.is-bottom(카피라이트 푸터가 화면에 들어왔을 때, 기존 IntersectionObserver
-   로직)과 완전히 같은 타이밍에 배경 레이어도 투명해지도록 형제 선택자로 연동함
-   — JS는 그대로 #mTabs에만 클래스를 토글하면 되고 별도 수정이 필요 없음 */
+   로직)과 완전히 같은 타이밍에 캡슐도 사라지도록 형제 선택자로 연동함 —
+   JS는 그대로 #mTabs에만 클래스를 토글하면 되고 별도 수정이 필요 없음.
+   filter:blur()가 걸린 상태에서는 background:transparent보다 opacity:0이
+   더 안전하게(블러 렌더링 아티팩트 없이) 사라짐 */
 body.mobile-mode #mTabs.is-bottom ~ #mTabsBg {
-  background: transparent;
+  opacity: 0;
 }
 .m-tab {
   flex: 0 0 auto;
