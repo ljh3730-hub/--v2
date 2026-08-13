@@ -1531,11 +1531,11 @@ function renderMobilePerson(idx) {
     : (person.poster ? [POSTER_BASE + encodeURIComponent(person.poster)] : []);
   const hasDesc = !!(person.descKo || person.descEn);
   view.innerHTML = `
-    ${person.videoUrl ? `<a class="m-person-video" href="${person.videoUrl}" target="_blank" rel="noopener">영상 보기 / Watch Video</a>` : ''}
-    ${hasDesc ? `
+    ${(hasDesc || person.videoUrl) ? `
     <div class="detail-description-wrapper">
       ${person.descKo ? `<div class="detail-desc-ko">${person.descKo}</div>` : ''}
       ${person.descEn ? `<div class="detail-desc-en">${person.descEn}</div>` : ''}
+      ${person.videoUrl ? `<a class="m-person-video" href="${person.videoUrl}" target="_blank" rel="noopener">영상 보기 / Watch Video</a>` : ''}
     </div>` : ''}
     <div class="m-gallery">${imgSrcs.map(src => `<img src="${src}" alt="${person.name}"/>`).join('')}</div>
   `;
