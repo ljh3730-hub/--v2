@@ -1158,6 +1158,24 @@ body.tablet-mode .m-poster-caption { font-size: 13px; line-height: 20px; }
   top: 1.375rem;
   height: 24.8756cqw; /* 예전 #mHeader::after와 완전히 동일한 위치/길이 */
 }
+/* [버그 수정 3차] 실기기 스크린샷을 픽셀 단위로 직접 대조해서 찾은 원인:
+   background-color를 매 프레임 JS로 바꾸는데, 선(가늘고 긴 absolute 자식)의
+   위쪽 88%는 매 프레임 정상적으로 새 색으로 갱신되는데 맨 아래 약 10~15%
+   구간만 항상 오래된(더 어두운) 색 그대로 남아 마치 선이 중간에 뚝 끊겨
+   두 조각인 것처럼 보임 — sticky 조상(#mHeader) 내부에서 사파리 컴포지터가
+   이 얇은 요소의 박스 전체를 한 번에 리페인트하지 않고 일부 스트립만
+   갱신하는 것으로 추정됨(예전엔 ::before 가상요소에 translateZ(0)로 별도
+   GPU 레이어 승격을 줬었는데, 이제 색이 바뀌는 대상이 가상요소가 아니라
+   이 요소 자신이므로 승격 위치를 옮겨야 함). 이 두 선 요소 자신을 독립된
+   합성 레이어로 강제 승격시켜 부분 리페인트로 인한 스냅샷 잔상을 방지 */
+.m-header-line,
+.m-header-line-right {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: background-color;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
 .m-list-line {
   top: 0;
   bottom: 0; /* #mListView 전체 높이만큼 — 예전 .m-view::before와 동일 */
