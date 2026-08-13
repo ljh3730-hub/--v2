@@ -1210,7 +1210,12 @@ body.tablet-mode .m-poster-caption { font-size: 13px; line-height: 20px; }
   left: 3.4826cqw; /* 14px / 402px — 리스트 세로선과 동일 x */
   top: 0;
   width: 1px;
-  height: 6.4677cqw; /* .m-row의 line-height(26px/402px)와 동일 — 명시적 값 */
+  height: calc(6.4677cqw + 2px); /* [버그 수정 5차] 실기기 사파리에서 인접한
+     두 SVG 조각의 경계가 서브픽셀 반올림 오차로 각자 다른 물리 픽셀에 스냅되며
+     그 사이에 미세한 흰 여백(=점선처럼 보이는 원인)이 생김 — 정확히 행 높이와
+     맞추는 대신 2px 더 길게 늘려 다음 행 쪽으로 겹치게 해서 그 여백을 덮음
+     (overflow:visible이라 겹친 부분도 그대로 보임, pointer-events:none이라
+     클릭에는 영향 없음) */
   pointer-events: none;
   display: block;
   overflow: visible;
