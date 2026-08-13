@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon-v3.png"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"/>
 <link rel="stylesheet" href="css/common.css?v=2.0"/>
-<link rel="stylesheet" href="css/landing.css?v=5.1"/>
+<link rel="stylesheet" href="css/landing.css?v=5.2"/>
 </head>
 <body>
 <div id="page">
@@ -154,12 +154,11 @@
     <!-- 기본(랜딩) 화면: 이름/작품 제목 연결선 리스트 — 탭과 무관한 기본 상태라
          ABOUT/POSTERS 어느 쪽도 활성/밑줄 표시되지 않음 -->
     <div id="mListView" class="m-view landing-page">
-      <!-- [버그 수정 4차] #mListView 전체를 관통하는 단일 긴 세로선(div든 SVG든)은
-           27행 각각이 개별 GPU 레이어로 승격되는 것과 부딪혀 행 경계마다 끊겨
-           보이는 문제가 반복됨(JS solid color / GPU 레이어 승격 / SVG rect
-           세 가지 방식 모두 실패). 이제 리스트 자체에는 세로선을 두지 않고,
-           각 .m-row가 자기 행 높이만큼의 짧은 선 조각(.m-row-line, SVG)을
-           직접 갖도록 바꿈(js/landing.js buildMobileList 참고) -->
+      <!-- [버그 수정 6차 - 최종] 애니메이션(빛 스윕)이 있는 방식은 여러 시도(공유
+           그라데이션 / JS 색상 주입 / GPU 레이어 승격 / SVG rect / 행별 조각)가
+           실기기 사파리에서 전부 점선처럼 끊겨 보여서, 애니메이션을 포기하고
+           JS가 전혀 관여하지 않는 단순 정적 검정 실선으로 되돌림 -->
+      <div class="m-list-line"></div>
       <div id="mList"></div>
     </div>
     <!-- POSTERS 탭: 데스크톱 버전과 동일한 27개 포스터 그리드 -->
@@ -201,6 +200,6 @@
   </div>
 </div>
 
-<script src="js/landing.js?v=3.4"></script>
+<script src="js/landing.js?v=3.5"></script>
 </body>
 </html>

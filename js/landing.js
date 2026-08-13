@@ -1240,21 +1240,7 @@ function buildMobileList() {
     const row = document.createElement('div');
     row.className = 'm-row';
     row.dataset.pi = pi;
-    /* [버그 수정 4차 - 리스트 세로선] #mListView 전체를 관통하는 단일 긴 선
-       (div/SVG 둘 다) 대신, 각 행마다 "그 행 높이만큼만"인 짧은 선 조각을
-       넣는 구조로 교체함. 헤더 세로선이 실제로 고쳐졌던 조건(요소가 짧고,
-       height가 auto/stretch가 아닌 명시적 값이고, 같은 GPU 레이어에 있는
-       형제들과 동일한 성격)과 정확히 맞추기 위함 -- 27행 전체를 관통하는
-       하나의 긴 요소는 각 행(.m-row-name/.m-row-title)이 개별 GPU 레이어로
-       승격되는 것과 부딪혀 행 경계마다 끊겨 보이는 문제가 반복적으로
-       발생했음(JS solid color, GPU 레이어 승격, SVG 단일 rect 세 가지 모두
-       시도했지만 실패). 참고로 SVG를 도입한다고 higher-order 요소(예:
-       #mListView 전체 span)에 top:0;bottom:0으로 늘리려 하면 SVG는
-       viewBox 비율 때문에 auto-height일 때 스트레치가 무시되고 1x1로
-       찌그러지는 것도 이번에 발견함 -- 그래서 각 행 조각은 auto/stretch가
-       아니라 .m-row와 동일한 명시적 height(line-height 값)를 직접 지정함 */
     row.innerHTML =
-      `<svg class="m-row-line" viewBox="0 0 1 1" preserveAspectRatio="none"><rect width="1" height="1" fill="#000000"/></svg>` +
       `<span class="m-row-name">${DATA[pi].name}</span>` +
       `<span class="m-row-title">${DATA[pi].koTitle || ''}</span>`;
     /* 행 전체를 클릭 영역으로 써서 어디를 눌러도(이름 쪽/제목 쪽 상관없이)
@@ -1843,39 +1829,13 @@ function updateHeaderLineGlow(shimmerX) {
   });
 }
 
-/* [버그 수정] 리스트 좌측 세로선(.m-list-line)은 #mListView 전체 높이(수천 px,
-   27행)만큼 늘어나는 극단적으로 가늘고 긴 요소라, 공유 라디얼 그라데이션
-   배경을 그 위에 그리면 점선처럼 끊겨 보이는 렌더링 아티팩트가 있었음
-   (헤더 세로선과 같은 부류의 문제) -- 헤더 세로선과 동일하게 매 프레임 JS가
-   계산한 단일 밝기값을 backgroundColor로 직접 칠하는 방식으로 바꿈. 다만
-   이 선은 세로로 매우 길어서 "맨 위 좌표"를 대표값으로 쓰면 안 되고(항상
-   페이지 중심에서 아주 멀리 떨어진 것처럼 계산됨), 선 자신의 세로 중앙
-   지점을 대표 y로 써서 페이지 중앙 부근에 있는 것처럼 자연스럽게 반응하게 함 */
-let mRowLineEls = null;
-function updateListLineGlow(shimmerX) {
-  if (mRowLineEls === null) {
-    mRowLineEls = Array.from(document.querySelectorAll('.m-row-line'))
-      .map(svg => ({ svg, rect: svg.querySelector('rect') }))
-      .filter(o => o.rect);
-  }
-  if (!mRowLineEls.length) return;
-  const mp = document.getElementById('mobilePage');
-  if (!mp) return;
-  const mpRect = mp.getBoundingClientRect();
-  const centerY = mobilePageLogicalH / 2;
-  mRowLineEls.forEach(({ svg, rect }) => {
-    const boxRect = svg.getBoundingClientRect();
-    const elX = boxRect.left - mpRect.left;
-    const elMidY = (boxRect.top - mpRect.top) + boxRect.height / 2;
-    const dx = shimmerX - elX;
-    const dy = centerY - elMidY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const glow = glowForDistance(dist, mobileSpotRadiusPx);
-    const v = Math.round(Math.max(0, Math.min(1, glow)) * 255);
-    rect.setAttribute('fill', 'rgb(' + v + ',' + v + ',' + v + ')');
-    void svg.getBoundingClientRect();
-  });
-}
+/* [버그 수정 6차 - 최종] 리스트 좌측 세로선은 공유 라디얼 그라데이션, JS
+   solid backgroundColor, GPU 레이어 승격, 단일 SVG rect, 행별 SVG 조각(0px/2px
+   겹침) 등 여러 방식을 시도했지만 실기기 사파리에서 매번 점선처럼 끊겨
+   보이는 문제가 반복됐음. 더 이상 이 선에 애니메이션(빛 스윕)을 태우지
+   않기로 함 -- #mListView에 애초의 단순한 정적 검정 실선(.m-list-line,
+   HTML 참고)만 두고 JS는 전혀 건드리지 않음. 헤더 세로선(.m-header-line)
+   애니메이션은 그대로 유지됨 */
 
 function tickShimmer(now) {
   if (isMobileViewport()) {
@@ -1884,7 +1844,6 @@ function tickShimmer(now) {
     const mp = document.getElementById('mobilePage');
     if (mp) mp.style.setProperty('--shimmer-x', x + 'px');
     updateHeaderLineGlow(x);
-    updateListLineGlow(x);
     requestAnimationFrame(tickShimmer);
     return;
   }

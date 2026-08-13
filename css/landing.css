@@ -1193,39 +1193,21 @@ body.tablet-mode .m-poster-caption { font-size: 13px; line-height: 20px; }
   transform: translateZ(0); /* rect 자신도 승격 -- fill이 바뀌는 실제 대상 */
   -webkit-transform: translateZ(0);
 }
-/* [버그 수정 4차 - 최종] #mListView 전체를 관통하는 단일 긴 세로선은 여러
-   방식(공유 라디얼 그라데이션 / JS solid backgroundColor / GPU 레이어 승격 /
-   단일 SVG rect)을 다 시도해도 27행 경계마다 끊겨 보이는 문제가 반복됐음
-   (각 행 텍스트가 개별 GPU 레이어로 승격되는 것과 부딪히는 것으로 추정).
-   게다가 SVG를 이 전체-높이 요소에 쓰면 top:0/bottom:0 스트레치가 SVG의
-   viewBox 고유 비율 계산에 밀려 1x1로 찌그러지는 별도 버그까지 발견됨.
-   완전히 다른 구조로 교체: 리스트 자체에는 세로선이 없고, 대신 각
-   .m-row가 자기 행 높이만큼의 명시적 height를 가진 짧은 선 조각
-   (.m-row-line)을 스스로 그림 — 헤더 세로선이 실제로 고쳐졌던 조건(짧고,
-   height가 auto/스트레치가 아닌 명시적 값)과 동일하게 맞춤. 27개 조각이
-   행과 행 사이 간격 없이(#mList gap:0) 위아래로 딱 붙어 이어지므로
-   시각적으로는 하나의 연속된 직선처럼 보임 */
-.m-row-line {
+/* [버그 수정 6차 - 최종] 공유 라디얼 그라데이션 / JS solid backgroundColor /
+   GPU 레이어 승격 / 단일 SVG rect / 행별 SVG 조각(0px, 2px 겹침) 등 여러
+   방식을 다 시도했지만 실기기 사파리에서 이 선만 매번 점선처럼 끊겨
+   보이는 문제가 반복됨 -- 애니메이션(빛 스윕) 자체를 포기하고, 다른
+   요소들과 무관하게 처음부터 끝까지 절대 변하지 않는 단순 정적 검정
+   실선으로 되돌림. JS가 전혀 관여하지 않으므로 이 부류의 버그가 애초에
+   발생할 수 없음(HTML: #mListView 첫 자식 div.m-list-line) */
+.m-list-line {
   position: absolute;
-  left: 3.4826cqw; /* 14px / 402px — 리스트 세로선과 동일 x */
-  top: 0;
+  left: 3.4826cqw; /* 14px / 402px */
   width: 1px;
-  height: calc(6.4677cqw + 2px); /* [버그 수정 5차] 실기기 사파리에서 인접한
-     두 SVG 조각의 경계가 서브픽셀 반올림 오차로 각자 다른 물리 픽셀에 스냅되며
-     그 사이에 미세한 흰 여백(=점선처럼 보이는 원인)이 생김 — 정확히 행 높이와
-     맞추는 대신 2px 더 길게 늘려 다음 행 쪽으로 겹치게 해서 그 여백을 덮음
-     (overflow:visible이라 겹친 부분도 그대로 보임, pointer-events:none이라
-     클릭에는 영향 없음) */
+  background: #000000;
   pointer-events: none;
-  display: block;
-  overflow: visible;
-  background: none; /* SVG 루트 자신의 배경은 안 씀 -- 내부 rect의 fill만 사용 */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-.m-row-line rect {
-  transform: translateZ(0); /* rect 자신도 승격 -- fill이 바뀌는 실제 대상 */
-  -webkit-transform: translateZ(0);
+  top: 0;
+  bottom: 0; /* #mListView 전체 높이만큼 */
 }
 body.mobile-mode .m-vertical-line::before {
   content: '';
