@@ -1765,12 +1765,51 @@ function scheduleMobileGradientMetricsUpdate() {
   }));
 }
 
+/* [버그 수정] #mHeader(position:sticky) 안쪽에 있는 헤더 세로선 2개
+   (.m-header-line, .m-header-line-right)만 실제 아이폰 사파리에서 공유
+   캔버스(background-position:calc(...) + 상속된 CSS 변수) 기반 하이라이트가
+   전혀 적용되지 않고 항상 검정으로 고정되는 문제가 실측 화면 녹화로
+   확인됨(같은 방식을 쓰는 다른 모든 텍스트 요소는 정상 작동 — sticky
+   조상 + 절대위치 가상요소 + calc() 조합에서만 나타나는 사파리 특유의
+   렌더링 문제로 보임). 크로미움에서는 재현되지 않아 원인을 code-level로
+   더 좁히기 어려워서, 아예 이 두 선만 공유 매커니즘에서 빼고 매 프레임
+   JS가 직접 밝기(0~1)를 계산해 --line-glow로 꽂아주는 독립적인 방식으로
+   교체함(계산식은 CSS의 radial-gradient 색 정지점 0%/40%/75%와 동일하게
+   맞춤 — 시각적으로는 100% 동일해야 함) */
+let mHeaderLineEls = null;
+function glowForDistance(dist, radius) {
+  const p = dist / radius;
+  if (p <= 0.40) return 0.75 - (p / 0.40) * (0.75 - 0.38);
+  if (p <= 0.75) return 0.38 * (1 - (p - 0.40) / 0.35);
+  return 0;
+}
+function updateHeaderLineGlow(shimmerX) {
+  if (!mHeaderLineEls) {
+    mHeaderLineEls = [
+      document.querySelector('.m-header-line'),
+      document.querySelector('.m-header-line-right'),
+    ].filter(Boolean);
+  }
+  if (!mHeaderLineEls.length) return;
+  const centerY = mobilePageLogicalH / 2; /* 공유 그라데이션의 세로 중심(50%)과 동일 기준 */
+  mHeaderLineEls.forEach(el => {
+    const elX = parseFloat(el.style.getPropertyValue('--el-x')) || 0;
+    const elY = parseFloat(el.style.getPropertyValue('--el-y')) || 0;
+    const dx = shimmerX - elX;
+    const dy = centerY - elY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const glow = glowForDistance(dist, mobileSpotRadiusPx);
+    el.style.setProperty('--line-glow', glow);
+  });
+}
+
 function tickShimmer(now) {
   if (isMobileViewport()) {
     const t = (now % MOBILE_SPOT_ANIM_PERIOD_MS) / MOBILE_SPOT_ANIM_PERIOD_MS;
     const x = -mobileSpotMarginPx + t * (mobilePageLogicalW + mobileSpotMarginPx * 2);
     const mp = document.getElementById('mobilePage');
     if (mp) mp.style.setProperty('--shimmer-x', x + 'px');
+    updateHeaderLineGlow(x);
     requestAnimationFrame(tickShimmer);
     return;
   }

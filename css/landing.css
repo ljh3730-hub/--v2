@@ -1188,6 +1188,23 @@ body.mobile-mode .m-vertical-line::before {
        동일하게 유지됨(reach 불변, 밝기만 완화) */
     rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.38) 40%, rgba(255, 255, 255, 0) 75%); /* [강화 3차] 요청 수치(0.8~0.85대)에 최대한 가깝게 더 올림(0.6->0.75, 0.25->0.38). 화이트아웃(#95)을 냈던 0.95는 여전히 피함. 색 자체는 이미 순수 흰색(255,255,255)이라 더 밝게 바꿀 여지는 없고 투명도만 조절 가능 - 실측해보면 이 효과는 화면 전체가 아니라 공유 원과의 거리에 따라 그 순간 1~2줄만 밝아지는 구조라 나머지는 항상 검정으로 남음, 이게 안 보인다고 느껴지는 주된 이유로 보임(수치만으로는 이 구조 자체는 안 바뀜) */
 }
+/* [버그 수정] 실제 아이폰 사파리 화면 녹화로 확인된 문제: #mHeader가
+   position:sticky라서 그런지, 이 두 세로선(헤더 좌/우)만 위 공유 캔버스
+   방식(background-position:calc(...) + 상속된 CSS 변수)이 전혀 적용되지
+   않고 항상 순수 검정으로 고정되어 있었음 — 바로 옆 텍스트는 정상적으로
+   밝아졌다 어두워졌다 하는데 이 선만 그대로였음(크로미움에서는 재현 안 됨,
+   사파리 특유의 렌더링 문제로 추정). 이 두 선만 공유 매커니즘에서 완전히
+   분리해서 JS(tickShimmer/updateHeaderLineGlow)가 매 프레임 직접 계산한
+   밝기(--line-glow, 0~1)를 opacity로 쓰는 훨씬 단순한 방식으로 교체함 —
+   sticky/calc() 조합을 아예 타지 않으므로 더 안정적으로 동작함. 뒤에 오는
+   규칙이라 소스 순서상으로도 위 .m-vertical-line::before보다 이기지만,
+   혹시 모를 우선순위 충돌을 막기 위해 !important도 같이 둠 */
+body.mobile-mode .m-vertical-line.m-header-line::before,
+body.mobile-mode .m-vertical-line.m-header-line-right::before {
+  background-image: none !important;
+  background: #ffffff !important;
+  opacity: var(--line-glow, 0) !important;
+}
 .m-header-left {
   /* 선 위치(x=14) + 7px 여백 = x=21, 402px 기준 5.2239cqw로 하나로 합침 —
      402px 이상에서는 정확히 21px로 캡되고, 그 미만에서는 프레임 축소
