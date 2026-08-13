@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon-v3.png"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"/>
 <link rel="stylesheet" href="css/common.css?v=2.0"/>
-<link rel="stylesheet" href="css/landing.css?v=4.8"/>
+<link rel="stylesheet" href="css/landing.css?v=5.0"/>
 </head>
 <body>
 <div id="page">
@@ -154,15 +154,12 @@
     <!-- 기본(랜딩) 화면: 이름/작품 제목 연결선 리스트 — 탭과 무관한 기본 상태라
          ABOUT/POSTERS 어느 쪽도 활성/밑줄 표시되지 않음 -->
     <div id="mListView" class="m-view landing-page">
-      <!-- [그라데이션 연동] .m-view::before로 그리던 리스트 전체 높이의 좌측
-           세로선(x=14)을 실제 DOM div로 분리(위 헤더 세로선과 동일 이유) -->
-      <!-- [버그 수정] 이 선만 리스트 전체 높이(수천 px)만큼 길게 늘어나다보니,
-           라디얼 그라데이션을 배경으로 까는 공유 방식이 이 극단적으로 가늘고
-           긴 1px 박스 위에서 점선처럼 깨져 보이는 렌더링 아티팩트가 있었음
-           (헤더 세로선과 같은 부류의 문제) -- .m-vertical-line 클래스를 떼서
-           구 공유 규칙 대상에서 완전히 빼고, JS가 단색으로 직접 칠하는
-           방식으로 바꿈(css/landing.css, js/landing.js 참고) -->
-      <div class="m-list-line"></div>
+      <!-- [버그 수정 4차] #mListView 전체를 관통하는 단일 긴 세로선(div든 SVG든)은
+           27행 각각이 개별 GPU 레이어로 승격되는 것과 부딪혀 행 경계마다 끊겨
+           보이는 문제가 반복됨(JS solid color / GPU 레이어 승격 / SVG rect
+           세 가지 방식 모두 실패). 이제 리스트 자체에는 세로선을 두지 않고,
+           각 .m-row가 자기 행 높이만큼의 짧은 선 조각(.m-row-line, SVG)을
+           직접 갖도록 바꿈(js/landing.js buildMobileList 참고) -->
       <div id="mList"></div>
     </div>
     <!-- POSTERS 탭: 데스크톱 버전과 동일한 27개 포스터 그리드 -->
@@ -204,6 +201,6 @@
   </div>
 </div>
 
-<script src="js/landing.js?v=3.2"></script>
+<script src="js/landing.js?v=3.4"></script>
 </body>
 </html>
